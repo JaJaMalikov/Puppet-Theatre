@@ -1,14 +1,16 @@
 import sys
 import scipy.io.wavfile as wav
 
+#loads wav file as array of ints which can be normalized and turned into a visual waveform
+#to be restructured later into an object/class for faster resize times
+
+loc = 33
+
 def to_mono(fname, channel=0):
 	(freq, sig) = wav.read(fname)
 	if sig.ndim == 2:
 		return (sig[:,channel], freq)
 	return (sig, freq)
-
-def avg(lst):
-	return int(sum(lst) / len(lst))
 
 def Normalize(lst, height):
 	return [int(i/max(lst)*height) for i in lst]

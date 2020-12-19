@@ -1,49 +1,40 @@
-import wx
-import os
-import copy
-
-from wx import glcanvas
-
-from collections import OrderedDict
-
+#Graphical Libraries
 import pygame
-from pygame.locals import *
-
-
-import  wx.lib.newevent, wx.stc as stc
-import numpy as np
-
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-import json
+#other built-in libraries
+import copy
 
-import random
-import string
-
-import datetime
-from datetime import datetime
-
+#the default vertecies, coords, and edges
+#produced by vert_gen using a series of for-loops
 import verts
 
-import random
-
+loc = 127
 
 class OBJ2D:
 	def __init__(self, pathname):
+		#sets the default state, copying the verts, coords, and edges from verts
+		#loads the texture from pathname
 		self.pathname = pathname
 		self.loaded = False
 		self.verts = copy.deepcopy(verts.verts)
 		self.coords = copy.deepcopy(verts.coords)
 		self.edges = copy.deepcopy(verts.edges)
-		self.cur_verts = copy.deepcopy(verts.verts)
 
 		self.texture = self.load_texture()
 
 	def load_texture(self):
+		"""
+		the texture surface is loaded from pathname via pygame
+		pygame loads it as an image and built-in functions give the size data and the texture data
+		once loaded it checks the aspect ratio and multiplies the verts accordingly
+		this allows the image to be scaled more easily without warping
+		"""
 		textureSurface = pygame.image.load(self.pathname)
 		textureData = pygame.image.tostring(textureSurface, "RGBA", 1)
 
+		#load check probably not needed
 		if not self.loaded:
 			self.width = textureSurface.get_width()
 			self.height = textureSurface.get_height()
@@ -60,6 +51,10 @@ class OBJ2D:
 
 			self.loaded = True
 
+		"""
+		texture is bound to an ID which is saved as self.texture
+		this uses the old opengl fixed function pipeline and will be replaced with Beta 2
+		"""
 		glEnable(GL_TEXTURE_2D)
 		texture = glGenTextures(1)
 		glBindTexture(GL_TEXTURE_2D, texture)
@@ -74,23 +69,36 @@ class OBJ2D:
 		glGenerateMipmap(GL_TEXTURE_2D)
 		return texture
 
+		
+
 	def draw(self, inData, scale_mod = 1.0):
+		"""
+		using the fixed function pipeline the current texture is bound and drawn
+		the object data is used for translation, rotation, and scale
+		future plans include an additional transformation step for the parent 
+		before the transformation step for the child
+		"""
 		glBindTexture(GL_TEXTURE_2D, self.texture)
 
 		glPushMatrix()
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 		glEnable(GL_BLEND)
 
-		glTranslatef(inData["pos"][0], inData["pos"][1], inData["pos"][2] )
-		glRotatef(inData["angle"], 0, 0, 1)
-		glScalef(inData["flipX"] * inData["scaleX"] * scale_mod, inData["flipY"] * inData["scaleY"] * scale_mod, 1.0)
-		glBegin(GL_POLYGON)
+		#future parent transformation step goes here
+		#if parent != None:
+		#	self.transform(parent)
+		#self.transform(indata)
 
-		self.cur_verts = self.verts
+		#transformation step
+		glTranslatef(inData["Pos"][0], inData["Pos"][1], inData["Pos"][2] )
+		glRotatef(inData["Angle"], 0, 0, 1)
+		glScalef(inData["FlipX"] * inData["ScaleX"] * scale_mod, inData["FlipY"] * inData["ScaleY"] * scale_mod, 1.0)
+
+		glBegin(GL_POLYGON)
 
 		for x in range(len(self.verts)):
 			glTexCoord2f(*self.coords[x])
-			glVertex3f(*self.cur_verts[x])
+			glVertex3f(*self.verts[x])
 
 		glEnd()
 
@@ -98,14 +106,16 @@ class OBJ2D:
 		glPopMatrix()
 
 	def draw_wire(self, inData, scale_mod = 1.0):
+		"""
+		wire drawing for possible debug mode
+		"""
 		glBindTexture(GL_TEXTURE_2D, self.texture)
 
 		glPushMatrix()
 
-		glTranslatef(inData["pos"][0], inData["pos"][1], inData["pos"][2] )
-		glRotatef(inData["angle"], 0, 0, 1)
-		glScalef(inData["flipX"] * inData["scaleX"] * scale_mod, inData["flipY"] * inData["scaleY"] * scale_mod, 1.0)
-		self.cur_verts = self.verts
+		glTranslatef(inData["Pos"][0], inData["Pos"][1], inData["Pos"][2] )
+		glRotatef(inData["Angle"], 0, 0, 1)
+		glScalef(inData["FlipX"] * inData["ScaleX"] * scale_mod, inData["FlipY"] * inData["ScaleY"] * scale_mod, 1.0)
 
 		glBegin(GL_LINES)
 

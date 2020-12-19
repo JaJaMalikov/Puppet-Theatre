@@ -1,4 +1,12 @@
 import copy
+"""
+a special object to hold keystrokes and mouse motions for more precise control
+the keymap determines if the key is currently down
+the struck determines if the key was struck this tick
+this allows for continuous input with keymap, holding a key so it keeps returning true
+and instantanious input, only returning true for a single time that the key was struck
+"""
+loc = 58
 
 class Key_listener:
 	#holds current key states

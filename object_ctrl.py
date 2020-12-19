@@ -1,88 +1,116 @@
-#graphical Libraries
+#graphical libraries
 import wx
 
-#built-in libraries
-from datetime import datetime
-import webbrowser
-import json
+#other built in libraries
 import copy
+from datetime import datetime
+import json
 
-#Control panels
-from object_ctrl import objCtrl
-from timeline_ctrl import TimelineCtrl
-from render_ctrl import RenderCtrl
-from state_ctrl import StateCtrl
+#vertex default values
+import verts
 
-from listener import Key_listener
+#2D object class to hold the image
+from OBJ2D import OBJ2D
+
+#object list panel, holds a visual list of object
+#as well as creating and deleting objects
+from object_list import ObjectList
+
+#holds list of images from current object
+#also alows moving, deleting, and loading
+from image_list import ImageList
 
 #internal data structure default implementation
 import data_default
 
-"""
-Main window of the program
-loads and organizes the control panels
+from listener import Key_listener
 
-Outline of future releases:
+loc = 387
 
-1 - turn help menus into a single function
-3 - move imagelist menus to imagelist - object_ctrl, image_list
-4 - move objectlist menus to object_list - object_ctrl, object_list
-21- turn all state_ctrl sub functions into menu options for keyboard shortcuts - pos_panel, rot_panel, scale_panel
+version_name = "Monchy PT Object Control Panel Beta 1.0.1"
 
-2 - remove load check OBJ2D
+class objCtrl(wx.Panel):
+	"""
+	A container class for the object list and image list
+	allows for per-frame control over currently selected objects
+	and their currently available images
+	"""
+	def __init__(self, parent, data, window, Image_list):
+		wx.Panel.__init__(self, parent,style = wx.RAISED_BORDER)
+		self.data = data
+		self.window = window
+		self.Image_list = Image_list
 
-12- sampler turned into object to retain audio waveform data - timeline_ctrl, sampler
-13- remove slider and upgrade pygamepanel to act as timeline slider - timeline_ctrl
-14- remove full resize event from pygamepanel, make it larger than it needs to be only resize waveform - timeline_ctrl
-15- upgrade pygamepanel to act more like a pygame window with extra functionality - pygame_panel
+		self.build()
+		self.set_layout()
+		self.bind_all()
 
-22- add undo/redo feature, any time self.data is written to, copy.deepcopy to rolling list, add one to flow_control variable
-	undo moves flow_control variable back one, redo adds one, doesn't change if index = 0 or len(list)
-	changes made check if the current flow_control is at end of list, if not it truncates the list - whole project
+	def bind_all(self):
+		self.objList.Bind(wx.EVT_LISTBOX_DCLICK, self.SwitchObject)
+		self.imgList.Bind(wx.EVT_LISTBOX_DCLICK, self.SwitchImage)
 
-23- unlimited object composition, post modern opengl
+	def build(self):
+		#contains both panels in a tab-based notebook for better organization
+		self.mainBook = wx.Notebook(self)
+		self.objList = ObjectList(self.mainBook, wx.ID_ANY, self.data, self.window, self)
+		self.imgList = ImageList(self.mainBook, wx.ID_ANY, self.data, self.window, self, self.Image_list)
 
-8 - add keystroke listener to render_ctrl, add key binds - render_ctrl
-9 - adjust on_mouse_down for general purpose use, use resize viewbox- render_ctrl
+		self.mainBook.AddPage(self.objList , "objects" )
+		self.mainBook.AddPage(self.imgList , "images" )
 
-5 - delete object should ask "are you sure" - object_list
-6 - set_current_list move to update function - object_ctrl
-7 - check if update_object is needed - object_ctrl
-24- add limited object composition - object_ctrl
+	def set_layout(self):
+		mainBox = wx.BoxSizer(wx.HORIZONTAL)
+		mainBox.Add(self.mainBook, 4, wx.EXPAND)
+		self.SetSizer(mainBox)
 
-11- add feedback and statusbar of ffmpeg render - render_video_dialog
-10- merge render frames and render to video - render_video_dialog, render_frames_dialog
+	def create_menus(self):
+		#image loading dialog set in menu
+		#should best be moved to the imgList object
+		self.newMultiImg = self.window.fileMenu.Append(wx.ID_ANY, 'Load Images', 'Multiple New images')
+		self.window.Bind(wx.EVT_MENU, self.imgList.NewMultiImg , self.newMultiImg)
 
-16- turn state_ctrl into notebook - state_ctrl
-17- add overwrite panel to position panel - state_ctrl, pos_panel
-18- add overwrite panel to rotation panel - state_ctrl, rot_panel
-19- add overwrite panel to scale panel - state_ctrl, scale_panel
-20- add flip panel to scale panel - state_ctrl, scale_panel
+	def Update(self, second):
+		pass
 
-Beta:
-    number	nickname					change
--------------------------------------------------------------------------------------
-[X] 1.0.0 - "Better than Nothing"		Functional, bare bones
-[X] 1.0.1 - 							Code refactored, commented, and made maintainable
-[ ] 1.1.0 - "Family Sticks Together"	5, 6, 7, 24, Basic Composite objects added, parent/child relationship
-[ ] 1.1.1 - 							1, 3, 4, 21,  Menu Overhaul
-[ ] 1.1.2 - 							2, 8, 9, add keybinds and fix mouse down, render_ctrl
-[ ] 1.2.0 - "The Time Machine"			22, Add undo/redo
-[ ] 1.3.0 - "Soul Window"				12-15, Upgrade pygame panel to act as timeline control
-[ ] 1.4.0 -	"Ultimate Porpoise"			10, 11, render video overhaul
-[ ] 1.5.0 - "State of the Union"		16, 17, 18, 19, 20, state_ctrl overhaul
+	def set_data(self, data):
+		#loads data to load new or old projects
+		self.data = data
+		self.objList.set_data(self.data)
+		self.imgList.set_data(self.data)
 
-[ ] 2.0.0 - "FuuuuuTuuuuure"			Migrate to modern opengl
+	def reload(self):
+		#reloads all available images and objects
+		self.objList.reload()
+		self.imgList.reload()
 
-[ ] 3.0.0 - "I C what you did there"	Migrate to C++
+	def SwitchImage(self, event):
+		#changes the current image to selected image, should be moved to image list object
+		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Current Image"] = self.imgList.get_selection()
+		self.LoadStatus()
 
-"""
+	def SwitchObject(self, event):
+		#changes object to currently selected object, should be in object list
+		#also resets list to curren object
+		#set_current_list should likely be called on update function
+		self.data["Current Object"] = self.objList.get_string()
+		self.imgList.set_current_list()
 
-loc = 374	#code to date 3177
+		self.LoadStatus()
 
-version_name = "Monchy Puppet Theatre Beta 1.0.1"
+	def LoadStatus(self):
 
-class MainFrame(wx.Frame):
+		#sets status to indicate current object and image for confirmation of switching
+		self.window.Set_First_Status(self.data["Current Object"])
+		self.window.Set_Second_Status(self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Current Image"])
+
+	def update_object(self):
+		#only updates the current object
+		#why do I have this?
+		self.window.Set_First_Status(self.data["Current Object"])
+
+
+
+class testFrame(wx.Frame):
 	def __init__(self, parent, title, size):
 		wx.Frame.__init__(self,
 			parent, wx.ID_ANY, title, pos=(1,1), size=size,
@@ -91,16 +119,13 @@ class MainFrame(wx.Frame):
 		self.listener = Key_listener()
 
 		#sets all data to default position for a new project
-		self.new_project(True)
+		self.new_project()
 
 		#setting up layout
 		self.mainBox = wx.BoxSizer(wx.HORIZONTAL)
 
 		#add elements and panels here to allow them to make changes to the window
-		self.timelineCtrl = TimelineCtrl(self, wx.ID_ANY, self.data, self, (2000,50))
-		self.renderCtrl = RenderCtrl(self, wx.ID_ANY, self.data, self, (1000,700), self.Image_list, self.listener)
 		self.objCtrl = objCtrl(self, self.data, self, self.Image_list)
-		self.stateCtrl = StateCtrl(self, wx.ID_ANY, self.data, self)
 
 		#creates menus and tells all control panels to set their menus as well
 		self.create_menus()
@@ -138,12 +163,8 @@ class MainFrame(wx.Frame):
 		"""
 		self.center = wx.BoxSizer(wx.VERTICAL)
 		self.center.Add(wx.Panel(self, size=(2000,1)))
-		self.center.Add(self.renderCtrl, 1, wx.EXPAND)   #2
-		self.center.Add(self.timelineCtrl, 0, wx.EXPAND) #4
 
 		self.mainBox.Add(self.objCtrl, 0, wx.EXPAND)     #2
-		self.mainBox.Add(self.center, 1, wx.EXPAND)      #2, 4
-		self.mainBox.Add(self.stateCtrl, 0, wx.EXPAND)   #3
 
 		self.SetSizer(self.mainBox)
 
@@ -183,16 +204,16 @@ class MainFrame(wx.Frame):
 
 		self.fileMenu.AppendSeparator()
 
-		self.fileMenu.Append(self.closeWin)
-
-		self.menubar.Append(self.fileMenu, '&File')
 
 		#creates each control panel's menus in order
 		#the order these are called determines how the menus are laid out
-		self.timelineCtrl.create_menus()
-		self.renderCtrl.create_menus()
 		self.objCtrl.create_menus()
-		self.stateCtrl.create_menus()
+
+		#### end panel created menu items
+
+		self.fileMenu.Append(self.closeWin)
+
+		self.menubar.Append(self.fileMenu, '&File')
 
 		#help menu links back to youtube tutorials on how to use the program
 		self.helpMenu = wx.Menu()
@@ -249,15 +270,9 @@ class MainFrame(wx.Frame):
 			self.Set_Third_Status(str(self.ticks) )
 			self.lasttick = current_time
 			self.ticks = 0
-			self.timelineCtrl.Update(True)
-			self.renderCtrl.Update(True)
-			self.stateCtrl.Update(True)
 
 		else:
 			self.ticks += 1
-			self.timelineCtrl.Update(False)
-			self.renderCtrl.Update(False)
-			self.stateCtrl.Update(False)
 
 		#statusbar set functions, to be compressed into single function "Set_Status"
 	def Set_First_Status(self, text):
@@ -298,21 +313,17 @@ class MainFrame(wx.Frame):
 			self.data = json.loads(tempData.read())
 			tempData.close()
 			self.set_data()
-			self.timelineCtrl.setAudio(self.data["Audio"])
 			self.objCtrl.reload()
 			self.objCtrl.LoadStatus()
 			self.pathname = pathname
-			self.SetTitle(("%s (%s)" % (version_name,  self.pathname.split("\\")[-1].split(".")[0])) )
+			self.SetTitle("%s (%s)".format(version_name,  self.pathname.split("\\")[-1].split(".")[0]))
 
-	def OnNew(self, event):
+	def OnNew(self):
 		if len(self.data["Object List"]) > 1 or self.data["Audio"] != "":
 			self.SaveAsData(1)
-		self.new_project(False)
-		self.timelineCtrl.setAudio(self.data["Audio"])
-		self.objCtrl.reload()
-		self.objCtrl.LoadStatus()
+		self.new_project()
 
-	def new_project(self, startup):
+	def new_project(self):
 		#sets the animation state data into default, for more details see data_default.py
 		self.data = copy.deepcopy(data_default.data)
 
@@ -325,18 +336,14 @@ class MainFrame(wx.Frame):
 		self.ticks = 0
 		#clears the project name
 		self.SetTitle(version_name)
-		#try:
-		if not startup:
+		try:
 			self.set_data()
-		#except:
-		#	pass
+		except:
+			pass
 
 	def set_data(self):
 		#calls every control panel to load the new data
 		self.objCtrl.set_data(self.data)
-		self.renderCtrl.set_data(self.data)
-		self.stateCtrl.set_data(self.data)
-		self.timelineCtrl.set_data(self.data)
 
 	def SaveAsData(self, event):
 		with wx.FileDialog(self, "Save animation", wildcard="ANI files (*.ani)|*.ani",
@@ -361,14 +368,20 @@ class MainFrame(wx.Frame):
 		except IOError:
 			wx.LogError("Cannot save current data in file %s" % pathname)
 		self.pathname = pathname
-		self.SetTitle(("%s (%s)" % (version_name,  self.pathname.split("\\")[-1].split(".")[0])))
+		self.SetTitle("%s (%s)".format(version_name,  self.pathname.split("\\")[-1].split(".")[0]))
 
 	def OnClose(self, event):
 		wx.Exit()
 		exit()
 
 if __name__ == '__main__':
+	import pygame
+	w,h = 10,10
+
+	screen = pygame.display.set_mode((w,h))
+	pygame.init()
+
 	app = wx.App()
-	view = MainFrame(parent=None, title=version_name, size=(1600,1000))
+	view = testFrame(parent=None, title='Finger Pupper Theatre', size=(1500,700))
 	view.Show()
 	app.MainLoop()
