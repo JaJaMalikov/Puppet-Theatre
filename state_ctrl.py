@@ -214,11 +214,11 @@ class StateCtrl(wx.Panel):
 
 			init_x = self.data["Frames"][start][self.data["Current Object"]]["Pos"][0]
 			init_y = self.data["Frames"][start][self.data["Current Object"]]["Pos"][1]
-			init_z = self.data["Frames"][start][self.data["Current Object"]]["Pos"][2]
+			init_z = self.data["Frames"][start][self.data["Current Object"]]["Dist"]
 
 			end_x = self.data["Frames"][end][self.data["Current Object"]]["Pos"][0]
 			end_y = self.data["Frames"][end][self.data["Current Object"]]["Pos"][1]
-			end_z = self.data["Frames"][end][self.data["Current Object"]]["Pos"][2]
+			end_z = self.data["Frames"][end][self.data["Current Object"]]["Dist"]
 
 			diff_x = end_x - init_x
 			diff_y = end_y - init_y
@@ -236,7 +236,16 @@ class StateCtrl(wx.Panel):
 				self.data["Frames"][y + start][self.data["Current Object"]]["Pos"][1] = init_y + (step_y * y)
 
 			for z in range((total_steps)):
-				self.data["Frames"][z + start][self.data["Current Object"]]["Pos"][2] = init_z + (step_z * z)
+				self.data["Frames"][z + start][self.data["Current Object"]]["Dist"] = init_z + (step_z * z)
+				obj = self.data["Frames"][z + start][self.data["Current Object"]]
+				if self.data["Object List"][self.data["Current Object"]]["Parent"] != None:
+					obj["Pos"][2] = obj["Dist"] + self.data["Frames"][z + start][ obj["Parent"] ]["Dist"]
+				else:
+					obj["Pos"][2] = obj["Dist"]
+					if self.data["Object List"][self.data["Current Object"]]["Children"] != []:
+						for child in self.data["Object List"][self.data["Current Object"]]["Children"]:
+							self.data["Frames"][z + start][ child ]["Pos"][2] = obj["Dist"] + self.data["Frames"][z + start][ child ]["Dist"]
+
 
 	def On_rot_spin(self, event):
 		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Angle"] = self.rot_spin.GetValue()
@@ -246,9 +255,19 @@ class StateCtrl(wx.Panel):
 		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Angle"] = 0
 
 	def On_pos_button(self, event):
-		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Pos"][0] = 0.0
-		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Pos"][1] = 0.0
-		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Pos"][2] = 0.0
+		obj = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]
+		obj["Pos"][0] = 0.0
+		obj["Pos"][1] = 0.0
+		obj["Dist"] = 0.0
+		if self.data["Object List"][self.data["Current Object"]]["Parent"] != None:
+			obj["Pos"][2] = obj["Dist"] + self.data["Frames"][self.data["Current Frame"]][ self.data["Object List"][self.data["Current Object"]]["Parent"] ]["Dist"]
+		else:
+			obj["Pos"][2] = obj["Dist"]
+			if self.data["Object List"][self.data["Current Object"]]["Children"] != []:
+				for child in self.data["Object List"][self.data["Current Object"]]["Children"]:
+					self.data["Frames"][self.data["Current Frame"]][ child ]["Pos"][2] = obj["Dist"] + self.data["Frames"][self.data["Current Frame"]][ child ]["Dist"]
+
+
 
 	def On_set_rot_keyframe(self, event):
 		if "rot" not in self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Keyframes"]:
@@ -295,7 +314,15 @@ class StateCtrl(wx.Panel):
 		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Pos"][1] = ((height*2) * pos) - height
 
 	def On_pos_z_spin(self, event):
-		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Pos"][2] = 10-(self.pos_z_spin.GetValue()/2)
+		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Dist"] = 10-(self.pos_z_spin.GetValue()/2)
+		obj = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]
+		if self.data["Object List"][self.data["Current Object"]]["Parent"] != None:
+			obj["Pos"][2] = obj["Dist"] + self.data["Frames"][self.data["Current Frame"]][ obj["Parent"] ]["Dist"]
+		else:
+			obj["Pos"][2] = obj["Dist"]
+			if self.data["Object List"][self.data["Current Object"]]["Children"] != []:
+				for child in self.data["Object List"][self.data["Current Object"]]["Children"]:
+					self.data["Frames"][self.data["Current Frame"]][ child ]["Pos"][2] = obj["Dist"] + self.data["Frames"][self.data["Current Frame"]][ child ]["Dist"]
 
 	def set_data(self, data):
 		self.data = data
@@ -310,7 +337,7 @@ class StateCtrl(wx.Panel):
 
 		x_pos = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Pos"][0]
 		y_pos = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Pos"][1]
-		dist = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Pos"][2]
+		dist = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Dist"]
 
 		x_pos += (((dist*-1.0) * .59) + 6.0)
 		y_pos += (((dist*-1.0) * .4) + 4.2)
@@ -320,7 +347,7 @@ class StateCtrl(wx.Panel):
 
 		self.pos_x_spin.SetValue(int((x_pos / width) * 100))
 		self.pos_y_spin.SetValue(100-int((y_pos / height) * 100))
-		self.pos_z_spin.SetValue(int( (10 - dist) * 2 ))
+		self.pos_z_spin.SetValue(int( (10 - dist) * 20 ))
 
 		if "Pos" in self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Keyframes"]:
 			self.pos_keyframe_text.SetLabel("[X] Keyframe")

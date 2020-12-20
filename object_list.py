@@ -15,6 +15,29 @@ from OBJ2D import OBJ2D
 
 loc = 110
 
+class ParentMenu(wx.Menu):
+	def __init__(self, parent, data):
+		super(ParentMenu, self).__init__()
+
+		self.parent = parent
+		self.data = data
+
+		mmi = wx.MenuItem(self, wx.NewId(), 'Set Parent')
+		self.AppendItem(mmi)
+		self.Bind(wx.EVT_MENU, self.OnMakeParent, mmi)
+
+	def OnMakeParent(self, event):
+		keylist = list(self.data["Object List"].keys())
+		for key in keylist:
+			if self.data["Object List"][key]["Parent"] != None:
+				keylist.remove(key)
+		self.dlg = wx.SingleChoiceDialog(None, "Which", "title", keylist, wx.CHOICEDLG_STYLE)
+		if self.dlg.ShowModal() == wx.ID_OK:
+			objname = self.dlg.GetStringSelection()
+			self.data["Object List"][self.data["Current Object"]]["Parent"] = objname
+			self.data["Object List"][objname]["Children"].append(self.data["Current Object"])
+		self.dlg.Destroy()
+
 class ObjectList(wx.Panel):
 	"""
 	a basic list of object, creates and deletes them
@@ -38,6 +61,11 @@ class ObjectList(wx.Panel):
 	def bind_all(self):
 		self.btn1.Bind(wx.EVT_BUTTON, self.CreateNewObject)
 		self.btn2.Bind(wx.EVT_BUTTON, self.DeleteObject)
+		self.objList.Bind(wx.EVT_RIGHT_DOWN, self.OnRightDown)
+
+	def OnRightDown(self, event):
+		print("clicked")
+		self.PopupMenu(ParentMenu(self, self.data), event.GetPosition())
 
 	def set_layout(self):
 		self.buttonSizer = wx.BoxSizer(wx.VERTICAL)
@@ -74,17 +102,20 @@ class ObjectList(wx.Panel):
 	def DeleteObject(self, event):
 		#should be bound to a menu item one day with an "are you sure" box attached
 		if self.data["Current Object"] != "Camera":
-			self.window.Set_Third_Status(self.data["Current Object"] + " deleted")
+			box = wx.MessageDialog(None, 'Are you sure you want to delete %s' % self.data["Current Object"],
+				"Delete Object", wx.OK | wx.CANCEL | wx.ICON_WARNING)
+			if box.ShowModal() == wx.ID_OK:
+				self.window.Set_Third_Status(self.data["Current Object"] + " deleted")
 
-			self.data["Object List"].pop(self.data["Current Object"])
-			for frame in range(len(self.data["Frames"])):
-				self.data["Frames"][frame].pop(self.data["Current Object"])
+				self.data["Object List"].pop(self.data["Current Object"])
+				for frame in range(len(self.data["Frames"])):
+					self.data["Frames"][frame].pop(self.data["Current Object"])
 
-			self.data["Current Object"] = list(self.data["Object List"].keys())[0]
+				self.data["Current Object"] = list(self.data["Object List"].keys())[0]
 
-			self.objList.Set(list(self.data["Object List"].keys()) )
+				self.objList.Set(list(self.data["Object List"].keys()) )
 
-			self.frame.update_object()
+				self.frame.update_object()
 
 
 	def CreateNewObject(self, event):
@@ -97,7 +128,7 @@ class ObjectList(wx.Panel):
 				first = True
 
 			#creates empty object and copies default data values
-			self.data["Object List"][box.GetValue()] = {"Images":[ "none" ]}
+			self.data["Object List"][box.GetValue()] = {"Images":[ "none" ], "Parent":None, "Children":[]}
 
 			for frame in range(len(self.data["Frames"])):
 				self.data["Frames"][frame][box.GetValue()] = copy.deepcopy(data_default.default)

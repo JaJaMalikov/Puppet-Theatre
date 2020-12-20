@@ -69,9 +69,16 @@ class OBJ2D:
 		glGenerateMipmap(GL_TEXTURE_2D)
 		return texture
 
-		
+	def transform(self, inData, scale_mod, child):
+		if child:
+			glTranslatef(inData["Pos"][0], inData["Pos"][1], 0.0 )
+		else:
+			glTranslatef(inData["Pos"][0], inData["Pos"][1], inData["Pos"][2] )
 
-	def draw(self, inData, scale_mod = 1.0):
+		glRotatef(inData["Angle"], 0, 0, 1)
+		glScalef(inData["FlipX"] * inData["ScaleX"] * scale_mod, inData["FlipY"] * inData["ScaleY"] * scale_mod, 1.0)
+
+	def draw(self, inData, scale_mod = 1.0, parent = None):
 		"""
 		using the fixed function pipeline the current texture is bound and drawn
 		the object data is used for translation, rotation, and scale
@@ -84,15 +91,12 @@ class OBJ2D:
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 		glEnable(GL_BLEND)
 
-		#future parent transformation step goes here
-		#if parent != None:
-		#	self.transform(parent)
-		#self.transform(indata)
-
+		if parent != None:
+			self.transform(parent, scale_mod, False)
+			self.transform(inData, scale_mod, True)
+		else:
+			self.transform(inData, scale_mod, False)
 		#transformation step
-		glTranslatef(inData["Pos"][0], inData["Pos"][1], inData["Pos"][2] )
-		glRotatef(inData["Angle"], 0, 0, 1)
-		glScalef(inData["FlipX"] * inData["ScaleX"] * scale_mod, inData["FlipY"] * inData["ScaleY"] * scale_mod, 1.0)
 
 		glBegin(GL_POLYGON)
 
@@ -101,7 +105,6 @@ class OBJ2D:
 			glVertex3f(*self.verts[x])
 
 		glEnd()
-
 		glDisable(GL_BLEND)
 		glPopMatrix()
 

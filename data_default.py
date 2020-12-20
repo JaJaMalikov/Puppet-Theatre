@@ -25,9 +25,18 @@ keys:
 				"Aspect" - bool, if true the aspect ratio of the selected object is maintained
 """
 
-data["Object List"] = {"Camera":{"Images":["Camera"]}}
+data["Object List"] = {"Camera":{"Images":["Camera"],"Parent":None, "Children":[]}}
 data["Background Color"] = [0.0,0.0,0.0,0.0]
 data["Current Frame"] = 0
+
+"""
+free objects
+if object is made child it is removed from free object list
+	and added to the children of a free object
+free objects are selected from a list 
+object list draw order must be calculated for every frame
+draw order calc must be done 
+"""
 data["Current Object"] = "Camera"
 data["Render Dir"] = ""
 data["Video Name"] = ""
@@ -39,26 +48,30 @@ data["Frames"].append(
 		{
 		"Camera":{
 			"Current Image": "Camera",
-			"Pos":[0,0,0],
+			"Pos":[0.0,0.0,0.0],
+			"Dist":0.0,
 			"ScaleX":1,
 			"ScaleY":1,
 			"Angle":0,
 			"FlipX":1.0,
 			"FlipY":1.0,
 			"Keyframes":[],
-			"Aspect":False
+			"Aspect":False,
+			"Parent":None
 			}
 		}
 	)
 
 default = {
 	"Current Image": "none",
-	"Pos":[0,0,0],
+	"Pos":[0.0,0.0,0.0],
+	"Dist":0.0,
 	"ScaleX":1,
 	"ScaleY":1,
 	"Angle":0,
 	"FlipX":1.0,
 	"FlipY":1.0,
 	"Keyframes":[],
-	"Aspect":False
+	"Aspect":False,
+	"Parent":None
 }

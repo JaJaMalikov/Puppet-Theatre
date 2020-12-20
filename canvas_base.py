@@ -30,7 +30,8 @@ class CanvasBase(glcanvas.GLCanvas):
 		#self.data["Background Color"] is a 4 float list of RGBA values
 		#using the * before unpacks it because clear color takes 4 inputs
 		glClearColor(*self.data["Background Color"])
-
+		glEnable(GL_DEPTH_TEST)
+		glDepthFunc(GL_LEQUAL)
 		self.Bind(wx.EVT_SIZE, self.OnResize)
 
 	def is_resized(self):

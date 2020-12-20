@@ -46,8 +46,8 @@ class objCtrl(wx.Panel):
 		self.bind_all()
 
 	def bind_all(self):
-		self.objList.Bind(wx.EVT_LISTBOX_DCLICK, self.SwitchObject)
-		self.imgList.Bind(wx.EVT_LISTBOX_DCLICK, self.SwitchImage)
+		self.objList.Bind(wx.EVT_LISTBOX, self.SwitchObject)
+		self.imgList.Bind(wx.EVT_LISTBOX, self.SwitchImage)
 
 	def build(self):
 		#contains both panels in a tab-based notebook for better organization

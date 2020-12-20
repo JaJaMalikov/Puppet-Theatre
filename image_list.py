@@ -90,24 +90,34 @@ class ImageList(wx.Panel ):
 
 	def On_overwrite_future(self, event):
 		#overwrites all future images with currently select image
-		ref = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Current Image"]
-		for frame in range( self.data["Current Frame"], len(self.data["Frames"])):
-			self.data["Frames"][frame][self.data["Current Object"]]["Current Image"] = ref
+		box = wx.MessageDialog(None, 'Are you sure you want to overwrite all subsequent frames?',
+			"Overwrite all future frames", wx.OK | wx.CANCEL | wx.ICON_WARNING)
+		if box.ShowModal() == wx.ID_OK:
+			ref = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Current Image"]
+			for frame in range( self.data["Current Frame"], len(self.data["Frames"])):
+				self.data["Frames"][frame][self.data["Current Object"]]["Current Image"] = ref
 
 	def On_overwrite_past(self, event):
 		#overwrites all previous images with currently selected image
-		ref = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Current Image"]
-		for frame in range(0, self.data["Current Frame"]):
-			self.data["Frames"][frame][self.data["Current Object"]]["Current Image"] = ref
+		box = wx.MessageDialog(None, 'Are you sure you want to overwrite all previous frames?',
+			"Overwrite all previous frames", wx.OK | wx.CANCEL | wx.ICON_WARNING)
+		if box.ShowModal() == wx.ID_OK:
+			ref = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Current Image"]
+			for frame in range(0, self.data["Current Frame"]):
+				self.data["Frames"][frame][self.data["Current Object"]]["Current Image"] = ref
 
 	def On_overwrite_all(self, event):
 		#overwrites all frames with currently selected image
-		ref = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Current Image"]
-		for frame in range(len(self.data["Frames"])):
-			self.data["Frames"][frame][self.data["Current Object"]]["Current Image"] = ref
+		box = wx.MessageDialog(None, 'Are you sure you want to overwrite all frames?',
+			"Overwrite all frames", wx.OK | wx.CANCEL | wx.ICON_WARNING)
+		if box.ShowModal() == wx.ID_OK:
+			ref = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Current Image"]
+			for frame in range(len(self.data["Frames"])):
+				self.data["Frames"][frame][self.data["Current Object"]]["Current Image"] = ref
 
 	def On_overwrite_last(self, event):
 		#overwrites previous frame with currently selected image
+
 		ref = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Current Image"]
 		self.data["Frames"][self.data["Current Frame"]-1][self.data["Current Object"]]["Current Image"] = ref
 		self.window.timelineCtrl.onBack(1)

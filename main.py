@@ -45,10 +45,9 @@ Outline of future releases:
 8 - add keystroke listener to render_ctrl, add key binds - render_ctrl
 9 - adjust on_mouse_down for general purpose use, use resize viewbox- render_ctrl
 
-5 - delete object should ask "are you sure" - object_list
-6 - set_current_list move to update function - object_ctrl
-7 - check if update_object is needed - object_ctrl
-24- add limited object composition - object_ctrl
+5 - delete object should ask "are you sure" - object_list (also added to overwrite functions)
+7 - check if update_object is needed - object_ctrl (yes it is)
+24- add limited object composition - object_ctrl (very limited but it works!)
 
 11- add feedback and statusbar of ffmpeg render - render_video_dialog
 10- merge render frames and render to video - render_video_dialog, render_frames_dialog
@@ -64,7 +63,7 @@ Beta:
 -------------------------------------------------------------------------------------
 [X] 1.0.0 - "Better than Nothing"		Functional, bare bones
 [X] 1.0.1 - 							Code refactored, commented, and made maintainable
-[ ] 1.1.0 - "Family Sticks Together"	5, 6, 7, 24, Basic Composite objects added, parent/child relationship
+[X] 1.1.0 - "Family Sticks Together"	5, 6, 7, 24, Basic Composite objects added, parent/child relationship
 [ ] 1.1.1 - 							1, 3, 4, 21,  Menu Overhaul
 [ ] 1.1.2 - 							2, 8, 9, add keybinds and fix mouse down, render_ctrl
 [ ] 1.2.0 - "The Time Machine"			22, Add undo/redo
@@ -73,14 +72,17 @@ Beta:
 [ ] 1.5.0 - "State of the Union"		16, 17, 18, 19, 20, state_ctrl overhaul
 
 [ ] 2.0.0 - "FuuuuuTuuuuure"			Migrate to modern opengl
+[ ] 2.0.1 - 							Code refactored, commented, and made maintainable
+[ ]	2.1.0 - 							23, Adding complex composite objects, full lineage using transformation hierarchy
 
 [ ] 3.0.0 - "I C what you did there"	Migrate to C++
+[ ] 3.0.1 - 							Code refactored, commented, and made maintainable
 
 """
 
 loc = 374	#code to date 3177
 
-version_name = "Monchy Puppet Theatre Beta 1.0.1"
+version_name = "Monchy Puppet Theatre Beta 1.1.0"
 
 class MainFrame(wx.Frame):
 	def __init__(self, parent, title, size):
