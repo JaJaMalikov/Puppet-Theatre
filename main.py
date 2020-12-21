@@ -64,12 +64,12 @@ Beta:
 [X] 1.0.0 - "Better than Nothing"		Functional, bare bones
 [X] 1.0.1 - 							Code refactored, commented, and made maintainable
 [X] 1.1.0 - "Family Sticks Together"	5, 6, 7, 24, Basic Composite objects added, parent/child relationship
-[ ] 1.1.1 - 							1, 3, 4, 21,  Menu Overhaul
-[ ] 1.1.2 - 							2, 8, 9, add keybinds and fix mouse down, render_ctrl
-[ ] 1.2.0 - "The Time Machine"			22, Add undo/redo
-[ ] 1.3.0 - "Soul Window"				12-15, Upgrade pygame panel to act as timeline control
-[ ] 1.4.0 -	"Ultimate Porpoise"			10, 11, render video overhaul
-[ ] 1.5.0 - "State of the Union"		16, 17, 18, 19, 20, state_ctrl overhaul
+[X] 1.2.0 - "Record me Daddy"			8, 9, add keybinds and fix mouse down, render_ctrl
+[ ] 1.2.1 - 							1, 3, 4, 21,  Menu Overhaul
+[ ] 1.3.0 - "The Time Machine"			22, Add undo/redo
+[ ] 1.4.0 - "Soul Window"				12-15, Upgrade pygame panel to act as timeline control
+[ ] 1.5.0 -	"Ultimate Porpoise"			10, 11, render video overhaul
+[ ] 1.6.0 - "State of the Union"		16, 17, 18, 19, 20, state_ctrl overhaul
 
 [ ] 2.0.0 - "FuuuuuTuuuuure"			Migrate to modern opengl
 [ ] 2.0.1 - 							Code refactored, commented, and made maintainable
@@ -82,7 +82,7 @@ Beta:
 
 loc = 374	#code to date 3177
 
-version_name = "Monchy Puppet Theatre Beta 1.1.0"
+version_name = "Monchy Puppet Theatre Beta 1.2.0"
 
 class MainFrame(wx.Frame):
 	def __init__(self, parent, title, size):
@@ -102,8 +102,9 @@ class MainFrame(wx.Frame):
 		self.timelineCtrl = TimelineCtrl(self, wx.ID_ANY, self.data, self, (2000,50))
 		self.renderCtrl = RenderCtrl(self, wx.ID_ANY, self.data, self, (1000,700), self.Image_list, self.listener)
 		self.objCtrl = objCtrl(self, self.data, self, self.Image_list)
-		self.stateCtrl = StateCtrl(self, wx.ID_ANY, self.data, self)
-
+		self.stateCtrl = StateCtrl(self, wx.ID_ANY, self.data, self, self.listener)
+		global pygame
+		import pygame
 		#creates menus and tells all control panels to set their menus as well
 		self.create_menus()
 
@@ -164,6 +165,7 @@ class MainFrame(wx.Frame):
 		self.Bind(wx.EVT_MENU, self.On_tutorial4, self.tutorial4)
 		self.Bind(wx.EVT_MENU, self.On_tutorial5, self.tutorial5)
 		self.Bind(wx.EVT_MENU, self.On_tutorial6, self.tutorial6)
+
 
 	def create_menus(self):
 		self.menubar = wx.MenuBar()
@@ -239,6 +241,7 @@ class MainFrame(wx.Frame):
 		webbrowser.open("https://www.youtube.com/watch?v=15ymfD67Qbk&list=PLkVdGBkhsW-WdYoTn-Uf8SouWUh3vGnGO&index=6")
 
 	def tickrate(self, event):
+
 		"""
 		Controls the tickrate of the software
 		allows it to run at max speed, capped by the vsync rate
@@ -260,6 +263,7 @@ class MainFrame(wx.Frame):
 			self.timelineCtrl.Update(False)
 			self.renderCtrl.Update(False)
 			self.stateCtrl.Update(False)
+		self.listener.clear_struck()
 
 		#statusbar set functions, to be compressed into single function "Set_Status"
 	def Set_First_Status(self, text):

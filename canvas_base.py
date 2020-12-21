@@ -34,6 +34,7 @@ class CanvasBase(glcanvas.GLCanvas):
 		glDepthFunc(GL_LEQUAL)
 		self.Bind(wx.EVT_SIZE, self.OnResize)
 
+
 	def is_resized(self):
 		resized = self.resized
 		self.resized = False
@@ -68,6 +69,8 @@ class CanvasBase(glcanvas.GLCanvas):
 		glClearColor(*color)
 
 	def Update(self):
+
+
 		#only purges at the moment but future proofing in case updates should do more later
 		self.Purge()
 

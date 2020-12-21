@@ -65,6 +65,7 @@ class PygamePanel(wx.Panel):
 		self.screen.blit(image, pos)
 
 	def Update(self):
+
 		#swaps the buffers and then clears the new buffer before drawing
 		#not strictly nessesary but useful for current purposes
 		pygame.display.flip()

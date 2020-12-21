@@ -1,5 +1,6 @@
 #graphical libraries
 import wx
+import pygame
 
 #constants used throughout the program
 from consts import *
@@ -9,7 +10,7 @@ import data_default
 loc = 447
 
 class StateCtrl(wx.Panel):
-	def __init__(self, parent, ID, data, window):
+	def __init__(self, parent, ID, data, window, listener):
 		wx.Panel.__init__(self, parent, ID,style = wx.RAISED_BORDER)
 		"""
 		value sets = sliders + textboxes, 
@@ -23,6 +24,7 @@ class StateCtrl(wx.Panel):
 		"""
 		self.data = data
 		self.window = window
+		self.listener = listener
 
 		self.build()
 		self.set_layout()
@@ -58,6 +60,8 @@ class StateCtrl(wx.Panel):
 		self.flip_y_button.Bind(wx.EVT_BUTTON, self.On_flip_y_button)
 
 		###end bind sliders
+
+
 
 	def set_layout(self):
 		self.full_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -330,6 +334,7 @@ class StateCtrl(wx.Panel):
 
 
 	def Update(self, second):
+
 		#try:
 		### pos update
 

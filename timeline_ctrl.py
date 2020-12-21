@@ -64,6 +64,7 @@ class TimelineCtrl(wx.Panel):
 		self.FPS_btn.Bind(wx.EVT_BUTTON, self.Set_FPS)
 		self.PlaybackSlider.Bind(wx.EVT_SLIDER, self.onSliderScroll)
 
+
 	def create_menus(self):
 		"""
 		create audio loading menu option in main menu
@@ -87,7 +88,11 @@ class TimelineCtrl(wx.Panel):
 		#simply adding to the current frame results in errors
 		self.mediaPlayer.Seek(int(self.mediaPlayer.Tell() - self.ms_per_frame))
 
+	def isPlaying(self):
+		return(self.mediaPlayer.GetState() == wx.media.MEDIASTATE_PLAYING)
+
 	def onPlay(self, event):
+		print("playing")
 		"""
 		mediaCtrl wont return a playlength until it's played for at least a tenth of a second
 		sets the playbackslider range once playing
@@ -106,6 +111,7 @@ class TimelineCtrl(wx.Panel):
 			self.PlaybackSlider.SetSize((self.GetClientSize()[0], 20))
 
 	def onPause(self, event):
+		print("pausing")
 		self.mediaPlayer.Pause()
 
 	def onStop(self, event):
@@ -281,6 +287,8 @@ class TimelineCtrl(wx.Panel):
 		return int(self.PlaybackSlider.GetValue())
 
 	def Update(self, second):
+
+
 		if second:
 			self.time_counter += 1
 		if self.time_counter >= 5 and self.GetClientSize()[0] != self.ViewPortSize[0]:

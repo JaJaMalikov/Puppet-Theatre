@@ -40,6 +40,10 @@ class RenderCtrl(wx.Panel):
 		self.width, self.height = ViewPortSize
 		self.ViewPortSize = ViewPortSize
 		self.first_pos = 0
+		self.prev_frame = 0
+		self.left_mouse_click = False
+		self.middle_mouse_click = False
+		self.right_mouse_click = False
 
 		#builds the panel and sets layout, binds functions to actions
 		self.build()
@@ -78,6 +82,24 @@ class RenderCtrl(wx.Panel):
 		self.canvas.Bind(wx.EVT_MIDDLE_UP, self.OnMouseUp)
 
 		self.canvas.Bind(wx.EVT_MOTION, self.OnMouseMotion)
+
+
+		self.canvas.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
+		self.canvas.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
+		#self.window.Bind(wx.EVT_CHAR, self.OnKeyDown)
+		#self.window.timelineCtrl.PP.Bind(wx.EVT_CHAR, self.OnKeyDown)
+
+	def OnKeyDown(self, event):
+		self.prev_frame = self.data["Current Frame"]
+		print(event.GetKeyCode())
+		self.listener.set_keydown(event.GetKeyCode())
+		event.Skip()
+
+	def OnKeyUp(self, event):
+		self.prev_frame = self.data["Current Frame"]
+		print(event.GetKeyCode())
+		self.listener.set_keyup(event.GetKeyCode())
+		event.Skip()
 
 	def set_layout(self):
 		self.color_box = wx.BoxSizer(wx.HORIZONTAL)
@@ -191,10 +213,19 @@ class RenderCtrl(wx.Panel):
 		self.b_slider.SetValue(self.data["Background Color"][2]*100)
 
 	def OnMouseDown(self, event):
+		self.prev_frame = self.data["Current Frame"]
 		#gets the origin point of the mouse as is
 		#uses the distance (z pos) to calculates the opengl coordinates
 		#currently hard coded to work best on programmers monitor, must be updated for general use
 		#after setting the origin point the canvas captures the mouse to get future events
+		if event.LeftIsDown():
+			self.left_mouse_click = True
+		if event.RightIsDown():
+			self.right_mouse_click = True
+		if event.MiddleIsDown():
+			self.middle_mouse_click = True
+		self.canvas.SetFocus()
+
 		dist = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Dist"]
 
 		width = ((dist*-1.0) * .59) + 6.0
@@ -209,6 +240,9 @@ class RenderCtrl(wx.Panel):
 		self.canvas.CaptureMouse()
 
 	def OnMouseUp(self, event):
+		self.left_mouse_click = False
+		self.middle_mouse_click = False
+		self.right_mouse_click = False
 		self.canvas.ReleaseMouse()
 
 	def OnMouseMotion(self, event):
@@ -222,6 +256,7 @@ class RenderCtrl(wx.Panel):
 				at different distances
 			resets origin position in order to avoid a cumulative effect
 			"""
+
 			pos = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Pos"]
 			dist = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Dist"]
 
@@ -287,25 +322,50 @@ class RenderCtrl(wx.Panel):
 				cam["FlipY"] * cam["ScaleY"], 1.0)
 
 	def Update(self, second):
-		"""
-		for event in pygame.event.get():
-			if event.type == pygame.KEYDOWN:
-				print("pressed")
-				self.listener.set_keydown(event.key)
-			elif event.type == pygame.KEYUP:
-				self.listener.set_keyup(event.key)
-			elif event.type == pygame.MOUSEBUTTONDOWN:
-				self.listener.set_mouse_down(event.button)
-			elif event.type == pygame.MOUSEBUTTONUP:
-				self.listener.set_mouse_up(event.button)
-			else:
-				pass"""
-
+		#if self.canvas.HasFocus():
+		#	if self.listener.get_struck()
 		#sets the window status to the current frame
 		#clears the canvas of all images
 		#purge loads the identity and resets the perspective of the camera
 		#canvas is then reset to the camera
 		#finally everything is drawn
+		if self.listener.get_struck(68): #on D
+			self.window.timelineCtrl.onNext(1)
+		if self.listener.get_struck(65): #on A
+			self.window.timelineCtrl.onBack(1)
+
+		if self.listener.get_struck(32):
+			if self.window.timelineCtrl.isPlaying():
+				self.window.timelineCtrl.onPause(1)
+			else:
+				self.window.timelineCtrl.onPlay(1)
+
+		if self.listener.get_struck(306) and not self.window.timelineCtrl.isPlaying():
+			self.window.timelineCtrl.onPlay(1)
+		if self.listener.get_keyrel(306):
+			self.window.timelineCtrl.onPause(1)
+
+		if self.left_mouse_click:
+			if self.prev_frame != self.data["Current Frame"]:
+				print("change")
+				self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Pos"] = copy.deepcopy(self.data["Frames"][self.prev_frame ][self.data["Current Object"]]["Pos"])
+				self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Dist"] = copy.deepcopy(self.data["Frames"][self.prev_frame ][self.data["Current Object"]]["Dist"])
+				self.prev_frame = self.data["Current Frame"]
+
+		if self.right_mouse_click:
+			if self.prev_frame != self.data["Current Frame"]:
+				self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Angle"] = copy.deepcopy(self.data["Frames"][self.prev_frame ][self.data["Current Object"]]["Angle"])
+				self.prev_frame = self.data["Current Frame"]
+
+		if self.middle_mouse_click:
+			if self.prev_frame != self.data["Current Frame"]:
+
+				self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["ScaleX"] = copy.deepcopy(self.data["Frames"][self.prev_frame ][self.data["Current Object"]]["ScaleX"])
+				self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["ScaleY"] = copy.deepcopy(self.data["Frames"][self.prev_frame ][self.data["Current Object"]]["ScaleY"])
+
+				self.prev_frame = self.data["Current Frame"]
+
+
 		self.window.Set_Fifth_Status( str(self.data["Current Frame"]))
 		self.canvas.clear()
 		self.canvas.Purge()

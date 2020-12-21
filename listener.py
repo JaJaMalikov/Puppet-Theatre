@@ -12,6 +12,7 @@ class Key_listener:
 	#holds current key states
 	def __init__(self):
 		self.keymap = {k: v for v, k in enumerate([False]*512 )}
+		self.keyrel = [False]*512
 		self.struck = [False]*512
 		self.mouse_button = [False]*10
 		self.mouse_pos = (0,0)
@@ -19,10 +20,15 @@ class Key_listener:
 	def set_keydown(self, key):
 		self.struck[key] = True
 		self.keymap[key] = True
-
+		self.keyrel[key] = False
+ 
 	def set_keyup(self, key):
 		self.struck[key] = False
 		self.keymap[key] = False
+		self.keyrel[key] = True
+
+	def get_keyrel(self, key):
+		return self.keyrel[key]
 
 	def set_mouse_down(self, button):
 		"""
@@ -53,6 +59,7 @@ class Key_listener:
 
 	def clear_struck(self):
 		self.struck = [False]*512
+		self.keyrel = [False]*512
 
 	def get_all(self):
 		return [k for k,v in self.keymap.items() if v == True]
