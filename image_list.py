@@ -27,6 +27,27 @@ class ImageList(wx.Panel ):
 		self.set_layout()
 		self.bind_all()
 
+	def create_menus(self):
+		self.imgMenu = wx.Menu()
+
+		self.newMultiImg = wx.MenuItem(self.imgMenu, wx.ID_ANY, "&Load Images\tCtrl+I", "Load Images")
+		self.delImg = wx.MenuItem(self.imgMenu, wx.ID_ANY, "&Delete Image\tCtrl+J", "Delete Image")
+		self.moveImgUp = wx.MenuItem(self.imgMenu, wx.ID_ANY, "&Move Up\tCtrl+G", "Move Image Up")
+		self.moveImgDown = wx.MenuItem(self.imgMenu, wx.ID_ANY, "&Move Down\tCtrl+H", "Move Image Down")
+
+		self.imgMenu.Append(self.newMultiImg)
+		self.imgMenu.Append(self.delImg)
+		self.imgMenu.Append(self.moveImgUp)
+		self.imgMenu.Append(self.moveImgDown)
+
+		self.window.menubar.Append(self.imgMenu, "&Images")
+
+		#image loading dialog set in menu
+		self.window.Bind(wx.EVT_MENU, self.NewMultiImg , self.newMultiImg)
+		self.window.Bind(wx.EVT_MENU, self.removeImg, self.delImg)
+		self.window.Bind(wx.EVT_MENU, self.move_up, self.moveImgUp)
+		self.window.Bind(wx.EVT_MENU, self.move_down, self.moveImgDown)
+
 	def bind_all(self):
 		self.load_btn.Bind(wx.EVT_BUTTON, self.NewMultiImg)
 		self.delete_btn.Bind(wx.EVT_BUTTON, self.removeImg)

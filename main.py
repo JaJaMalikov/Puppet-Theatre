@@ -24,10 +24,11 @@ loads and organizes the control panels
 
 Outline of future releases:
 
-1 - turn help menus into a single function
-3 - move imagelist menus to imagelist - object_ctrl, image_list
-4 - move objectlist menus to object_list - object_ctrl, object_list
-21- turn all state_ctrl sub functions into menu options for keyboard shortcuts - pos_panel, rot_panel, scale_panel
+1 - turn help menus into a single function X
+3 - move imagelist menus to imagelist - object_ctrl, image_list X
+4 - move objectlist menus to object_list - object_ctrl, object_list X
+21- turn all state_ctrl sub functions into menu options for keyboard shortcuts - pos_panel, rot_panel, scale_panel 
+	abandoned because the shortcuts would be too numerous
 
 2 - remove load check OBJ2D
 
@@ -58,6 +59,9 @@ Outline of future releases:
 19- add overwrite panel to scale panel - state_ctrl, scale_panel
 20- add flip panel to scale panel - state_ctrl, scale_panel
 
+used shortcuts: N, O, S, A, X, shft+S, I, L, U, J, G, H
+
+
 Beta:
     number	nickname					change
 -------------------------------------------------------------------------------------
@@ -65,7 +69,7 @@ Beta:
 [X] 1.0.1 - 							Code refactored, commented, and made maintainable
 [X] 1.1.0 - "Family Sticks Together"	5, 6, 7, 24, Basic Composite objects added, parent/child relationship
 [X] 1.2.0 - "Record me Daddy"			8, 9, add keybinds and fix mouse down, render_ctrl
-[ ] 1.2.1 - 							1, 3, 4, 21,  Menu Overhaul
+[X] 1.2.1 - 							1, 3, 4, 21,  Menu Overhaul
 [ ] 1.3.0 - "The Time Machine"			22, Add undo/redo
 [ ] 1.4.0 - "Soul Window"				12-15, Upgrade pygame panel to act as timeline control
 [ ] 1.5.0 -	"Ultimate Porpoise"			10, 11, render video overhaul
@@ -82,7 +86,7 @@ Beta:
 
 loc = 374	#code to date 3177
 
-version_name = "Monchy Puppet Theatre Beta 1.2.0"
+version_name = "Monchy Puppet Theatre Beta 1.2.1"
 
 class MainFrame(wx.Frame):
 	def __init__(self, parent, title, size):
@@ -103,8 +107,6 @@ class MainFrame(wx.Frame):
 		self.renderCtrl = RenderCtrl(self, wx.ID_ANY, self.data, self, (1000,700), self.Image_list, self.listener)
 		self.objCtrl = objCtrl(self, self.data, self, self.Image_list)
 		self.stateCtrl = StateCtrl(self, wx.ID_ANY, self.data, self, self.listener)
-		global pygame
-		import pygame
 		#creates menus and tells all control panels to set their menus as well
 		self.create_menus()
 
@@ -123,6 +125,15 @@ class MainFrame(wx.Frame):
 		self.bind_all()
 		self.timer.Start()
 		self.Maximize(True)
+
+		self.helpDict = {
+		"&About All":"https://www.youtube.com/watch?v=oBAQy1D5r7o&list=PLkVdGBkhsW-WdYoTn-Uf8SouWUh3vGnGO&index=1",
+		"&About Objects":"https://www.youtube.com/watch?v=5L98weJKd48&list=PLkVdGBkhsW-WdYoTn-Uf8SouWUh3vGnGO&index=2",
+		"&About Timeline":"https://www.youtube.com/watch?v=Sm7fqqMC0Ks&list=PLkVdGBkhsW-WdYoTn-Uf8SouWUh3vGnGO&index=3",
+		"&About Renderer":"https://www.youtube.com/watch?v=ar9PjawB-qs&list=PLkVdGBkhsW-WdYoTn-Uf8SouWUh3vGnGO&index=4",
+		"&About States":"https://www.youtube.com/watch?v=rqVycueA8Tg&list=PLkVdGBkhsW-WdYoTn-Uf8SouWUh3vGnGO&index=5",
+		"&About Creating Video":"https://www.youtube.com/watch?v=15ymfD67Qbk&list=PLkVdGBkhsW-WdYoTn-Uf8SouWUh3vGnGO&index=6"
+		}
 
 	def set_layout(self):
 		#organizes layout
@@ -159,18 +170,17 @@ class MainFrame(wx.Frame):
 		self.Bind(wx.EVT_MENU, self.SaveData, self.saveData)
 		self.Bind(wx.EVT_MENU, self.SaveAsData, self.saveAsData)
 
-		self.Bind(wx.EVT_MENU, self.On_tutorial1, self.tutorial1)
-		self.Bind(wx.EVT_MENU, self.On_tutorial2, self.tutorial2)
-		self.Bind(wx.EVT_MENU, self.On_tutorial3, self.tutorial3)
-		self.Bind(wx.EVT_MENU, self.On_tutorial4, self.tutorial4)
-		self.Bind(wx.EVT_MENU, self.On_tutorial5, self.tutorial5)
-		self.Bind(wx.EVT_MENU, self.On_tutorial6, self.tutorial6)
+		self.Bind(wx.EVT_MENU, self.On_tutorial, self.tutorial1)
+		self.Bind(wx.EVT_MENU, self.On_tutorial, self.tutorial2)
+		self.Bind(wx.EVT_MENU, self.On_tutorial, self.tutorial3)
+		self.Bind(wx.EVT_MENU, self.On_tutorial, self.tutorial4)
+		self.Bind(wx.EVT_MENU, self.On_tutorial, self.tutorial5)
+		self.Bind(wx.EVT_MENU, self.On_tutorial, self.tutorial6)
 
 
 	def create_menus(self):
 		self.menubar = wx.MenuBar()
 		self.fileMenu = wx.Menu()
-
 		#creates the menu items for saving/loading the current project
 		self.newProj = wx.MenuItem(self.fileMenu, wx.ID_ANY, "&New Project\tCtrl+N", 'New Project')
 		self.loadData = wx.MenuItem(self.fileMenu, wx.ID_ANY, '&Load Project\tCtrl+O', 'Load Animation')
@@ -183,12 +193,6 @@ class MainFrame(wx.Frame):
 		self.fileMenu.Append(self.saveAsData)
 		self.fileMenu.AppendSeparator()
 
-		self.closeWin = wx.MenuItem(self.fileMenu, wx.ID_EXIT, '&Quit\tCtrl+X', 'Quit Application')
-
-		self.fileMenu.AppendSeparator()
-
-		self.fileMenu.Append(self.closeWin)
-
 		self.menubar.Append(self.fileMenu, '&File')
 
 		#creates each control panel's menus in order
@@ -197,6 +201,14 @@ class MainFrame(wx.Frame):
 		self.renderCtrl.create_menus()
 		self.objCtrl.create_menus()
 		self.stateCtrl.create_menus()
+
+		self.closeWin = wx.MenuItem(self.fileMenu, wx.ID_EXIT, '&Quit\tCtrl+X', 'Quit Application')
+
+		self.fileMenu.AppendSeparator()
+
+		self.fileMenu.Append(self.closeWin)
+
+
 
 		#help menu links back to youtube tutorials on how to use the program
 		self.helpMenu = wx.Menu()
@@ -222,23 +234,10 @@ class MainFrame(wx.Frame):
 
 		#opens to a playlist on youtube containing the tutorials for use
 		#could probably be turned into a single function
-	def On_tutorial1(self, event):
-		webbrowser.open("https://www.youtube.com/watch?v=oBAQy1D5r7o&list=PLkVdGBkhsW-WdYoTn-Uf8SouWUh3vGnGO&index=1")
+	def On_tutorial(self, event):
+		helplink = self.GetMenuBar().FindItemById(event.GetId()).GetItemLabel()
+		webbrowser.open(self.helpDict[helplink])
 
-	def On_tutorial2(self, event):
-		webbrowser.open("https://www.youtube.com/watch?v=5L98weJKd48&list=PLkVdGBkhsW-WdYoTn-Uf8SouWUh3vGnGO&index=2")
-
-	def On_tutorial3(self, event):
-		webbrowser.open("https://www.youtube.com/watch?v=Sm7fqqMC0Ks&list=PLkVdGBkhsW-WdYoTn-Uf8SouWUh3vGnGO&index=3")
-
-	def On_tutorial4(self, event):
-		webbrowser.open("https://www.youtube.com/watch?v=ar9PjawB-qs&list=PLkVdGBkhsW-WdYoTn-Uf8SouWUh3vGnGO&index=4")
-
-	def On_tutorial5(self, event):
-		webbrowser.open("https://www.youtube.com/watch?v=rqVycueA8Tg&list=PLkVdGBkhsW-WdYoTn-Uf8SouWUh3vGnGO&index=5")
-
-	def On_tutorial6(self, event):
-		webbrowser.open("https://www.youtube.com/watch?v=15ymfD67Qbk&list=PLkVdGBkhsW-WdYoTn-Uf8SouWUh3vGnGO&index=6")
 
 	def tickrate(self, event):
 

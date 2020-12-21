@@ -64,10 +64,8 @@ class objCtrl(wx.Panel):
 		self.SetSizer(mainBox)
 
 	def create_menus(self):
-		#image loading dialog set in menu
-		#should best be moved to the imgList object
-		self.newMultiImg = self.window.fileMenu.Append(wx.ID_ANY, 'Load Images', 'Multiple New images')
-		self.window.Bind(wx.EVT_MENU, self.imgList.NewMultiImg , self.newMultiImg)
+		self.imgList.create_menus()
+		self.objList.create_menus()
 
 	def Update(self, second):
 		pass

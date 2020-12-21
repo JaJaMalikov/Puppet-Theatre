@@ -58,6 +58,17 @@ class ObjectList(wx.Panel):
 		#sets the displayed list of objects according to what's in self.data
 		self.objList.Set(list(self.data["Object List"].keys()) )
 
+	def create_menus(self):
+		self.objMenu = wx.Menu()
+
+		self.newObj = self.objMenu.Append(wx.ID_ANY, "&New Object\tCtrl+L", "New Object")
+		self.delObj = self.objMenu.Append(wx.ID_ANY, "&Delete Object\tCtrl+U", "Delete Object")
+
+		self.window.Bind(wx.EVT_MENU, self.CreateNewObject, self.newObj)
+		self.window.Bind(wx.EVT_MENU,  self.DeleteObject, self.delObj)
+
+		self.window.menubar.Append(self.objMenu, "&Objects")
+
 	def bind_all(self):
 		self.btn1.Bind(wx.EVT_BUTTON, self.CreateNewObject)
 		self.btn2.Bind(wx.EVT_BUTTON, self.DeleteObject)
