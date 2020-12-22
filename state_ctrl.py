@@ -25,6 +25,7 @@ class StateCtrl(wx.Panel):
 		self.data = data
 		self.window = window
 		self.listener = listener
+		self.changed = False
 
 		self.build()
 		self.set_layout()
@@ -147,9 +148,11 @@ class StateCtrl(wx.Panel):
 
 	def On_flip_x_button(self, event):
 		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["FlipX"] *= -1.0
+		self.changed = True
 
 	def On_flip_y_button(self, event):
 		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["FlipY"] *= -1.0
+		self.changed = True
 
 	def chunks(self, lst, n):
 		"""Yield successive n-sized chunks from lst."""
@@ -181,6 +184,7 @@ class StateCtrl(wx.Panel):
 
 			for a in range((total_steps)):
 				self.data["Frames"][a + start][self.data["Current Object"]]["Angle"] = init + (step * a)
+		self.window.PushHistory()
 
 	def On_scale_inbetween_gen(self, event):
 		pairs = self.get_key_list("Scale")
@@ -207,6 +211,7 @@ class StateCtrl(wx.Panel):
 
 			for y in range((total_steps)):
 				self.data["Frames"][y + start][self.data["Current Object"]]["ScaleY"] = init_y + (step_y * y)
+		self.window.PushHistory()
 
 	def On_pos_inbetween_gen(self, event):
 		pairs = self.get_key_list("Pos")
@@ -249,14 +254,17 @@ class StateCtrl(wx.Panel):
 					if self.data["Object List"][self.data["Current Object"]]["Children"] != []:
 						for child in self.data["Object List"][self.data["Current Object"]]["Children"]:
 							self.data["Frames"][z + start][ child ]["Pos"][2] = obj["Dist"] + self.data["Frames"][z + start][ child ]["Dist"]
+		self.window.PushHistory()
 
 
 	def On_rot_spin(self, event):
 		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Angle"] = self.rot_spin.GetValue()
+		self.changed = True
 
 
 	def On_rot_button(self, event):
 		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Angle"] = 0
+		self.changed = True
 
 	def On_pos_button(self, event):
 		obj = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]
@@ -270,6 +278,7 @@ class StateCtrl(wx.Panel):
 			if self.data["Object List"][self.data["Current Object"]]["Children"] != []:
 				for child in self.data["Object List"][self.data["Current Object"]]["Children"]:
 					self.data["Frames"][self.data["Current Frame"]][ child ]["Pos"][2] = obj["Dist"] + self.data["Frames"][self.data["Current Frame"]][ child ]["Dist"]
+		self.changed = True
 
 
 
@@ -278,44 +287,52 @@ class StateCtrl(wx.Panel):
 			self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Keyframes"].append("Rot")
 		else:
 			self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Keyframes"].remove("Rot")
+		self.changed = True
 
 	def On_set_pos_keyframe(self, event):
 		if "pos" not in self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Keyframes"]:
 			self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Keyframes"].append("Pos")
 		else:
 			self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Keyframes"].remove("Pos")
+		self.changed = True
 
 	def On_set_scale_keyframe(self, event):
 		if "scale" not in self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Keyframes"]:
 			self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Keyframes"].append("Scale")
 		else:
 			self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Keyframes"].remove("Scale")
+		self.changed = True
 
 	def On_scale_button(self, event):
 		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["ScaleY"] = 1.0
 		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["ScaleX"] = 1.0
+		self.changed = True
 
 	def On_scale_x_spin(self, event):
 		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["ScaleX"] = self.scale_x_spin.GetValue()/100
 		if self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Aspect"]:
 			self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["ScaleY"] = self.scale_x_spin.GetValue()/100
+		self.changed = True
 
 	def On_scale_y_spin(self, event):
 		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["ScaleY"] = self.scale_y_spin.GetValue()/100
 		if self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Aspect"]:
 			self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["ScaleX"] = self.scale_y_spin.GetValue()/100
+		self.changed = True
 
 	def On_pos_x_spin(self, event):
 		dist = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Pos"][2]
 		pos = self.pos_x_spin.GetValue()/100
 		width = ((dist*-1.0) * .59) + 6.0
 		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Pos"][0] = ((width*2) * pos) - width
+		self.changed = True
 
 	def On_pos_y_spin(self, event):
 		dist = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Pos"][2]
 		pos = 1-self.pos_y_spin.GetValue()/100
 		height = (((dist*-1.0) * .4) + 4.2)
 		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Pos"][1] = ((height*2) * pos) - height
+		self.changed = True
 
 	def On_pos_z_spin(self, event):
 		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Dist"] = 10-(self.pos_z_spin.GetValue()/2)
@@ -327,13 +344,15 @@ class StateCtrl(wx.Panel):
 			if self.data["Object List"][self.data["Current Object"]]["Children"] != []:
 				for child in self.data["Object List"][self.data["Current Object"]]["Children"]:
 					self.data["Frames"][self.data["Current Frame"]][ child ]["Pos"][2] = obj["Dist"] + self.data["Frames"][self.data["Current Frame"]][ child ]["Dist"]
+		self.changed = True
 
 	def set_data(self, data):
 		self.data = data
 
-
-
 	def Update(self, second):
+		if second and self.changed:
+			self.changed = False
+			self.window.PushHistory()
 
 		#try:
 		### pos update

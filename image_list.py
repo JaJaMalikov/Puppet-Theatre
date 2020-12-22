@@ -117,6 +117,7 @@ class ImageList(wx.Panel ):
 			ref = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Current Image"]
 			for frame in range( self.data["Current Frame"], len(self.data["Frames"])):
 				self.data["Frames"][frame][self.data["Current Object"]]["Current Image"] = ref
+			self.window.PushHistory()
 
 	def On_overwrite_past(self, event):
 		#overwrites all previous images with currently selected image
@@ -126,6 +127,7 @@ class ImageList(wx.Panel ):
 			ref = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Current Image"]
 			for frame in range(0, self.data["Current Frame"]):
 				self.data["Frames"][frame][self.data["Current Object"]]["Current Image"] = ref
+			self.window.PushHistory()
 
 	def On_overwrite_all(self, event):
 		#overwrites all frames with currently selected image
@@ -135,6 +137,7 @@ class ImageList(wx.Panel ):
 			ref = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Current Image"]
 			for frame in range(len(self.data["Frames"])):
 				self.data["Frames"][frame][self.data["Current Object"]]["Current Image"] = ref
+			self.window.PushHistory()
 
 	def On_overwrite_last(self, event):
 		#overwrites previous frame with currently selected image
@@ -142,12 +145,14 @@ class ImageList(wx.Panel ):
 		ref = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Current Image"]
 		self.data["Frames"][self.data["Current Frame"]-1][self.data["Current Object"]]["Current Image"] = ref
 		self.window.timelineCtrl.onBack(1)
+		self.window.PushHistory()
 
 	def On_overwrite_next(self, event):
 		#overwrites next frame with currently selected image
 		ref = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Current Image"]
 		self.data["Frames"][self.data["Current Frame"]+1][self.data["Current Object"]]["Current Image"] = ref
 		self.window.timelineCtrl.onNext(1)
+		self.window.PushHistory()
 
 	def set_data(self, data):
 		self.data = data
@@ -181,6 +186,7 @@ class ImageList(wx.Panel ):
 		self.set_list(self.data["Current Object"])
 		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Current Image"] = self.imgList.GetString(new_pos)
 		self.imgList.SetSelection(new_pos)
+		self.window.PushHistory()
 
 	def move_down(self, event):
 		"""
@@ -204,6 +210,7 @@ class ImageList(wx.Panel ):
 		self.set_list(self.data["Current Object"])
 		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Current Image"] = self.imgList.GetString(new_pos )
 		self.imgList.SetSelection(new_pos)
+		self.window.PushHistory()
 
 	def NewMultiImg(self, event):
 		#loads a list of images to append to the object list
@@ -218,6 +225,7 @@ class ImageList(wx.Panel ):
 				#data image list is used to keep track of the paths of available images
 				self.data["Image List"].append(pathname)
 				self.AddImg(pathname, True)
+			self.window.PushHistory()
 
 	def AddImg(self, pathname, new):
 		"""
@@ -253,6 +261,7 @@ class ImageList(wx.Panel ):
 		self.data["Object List"][self.data["Current Object"]]["Images"].remove(self.get_selection())
 		self.set_list(self.data["Current Object"])
 		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Current Image"] = self.get_first()
+		self.window.PushHistory()
 
 	def set_list(self, cur_obj):
 		#sets the new object list 

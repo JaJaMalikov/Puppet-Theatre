@@ -29,11 +29,12 @@ class TimelineCtrl(wx.Panel):
 	controls the current position in time, uses a slider to sync up the audio with the current frame
 	allows switching between multiple framerates
 	"""
-	def __init__(self, parent, ID, data, window, ViewPortSize=(4000,50)):
+	def __init__(self, parent, ID, data, window, listener, ViewPortSize=(4000,80)):
 		wx.Panel.__init__(self, parent, ID, style=wx.RAISED_BORDER)
 		self.ViewPortSize = ViewPortSize
 		self.window = window
 		self.data = data
+		self.listener = listener
 		self.wave_data = []
 		self.song_length = 1
 		self.song_frames = 1
@@ -41,6 +42,7 @@ class TimelineCtrl(wx.Panel):
 		self.timeset = False
 		self.current_pos = 0
 		self.time_counter = 0
+		self.wavedata = sampler.wavedata()
 
 		self.framerates =['1', '2', '3', '4', '6', '12', '24', '30', '60']
 
@@ -62,7 +64,6 @@ class TimelineCtrl(wx.Panel):
 		self.pause_btn.Bind(wx.EVT_BUTTON, self.onPause)
 		self.VolumeSlider.Bind(wx.EVT_SLIDER, self.onSetVolume)
 		self.FPS_btn.Bind(wx.EVT_BUTTON, self.Set_FPS)
-		self.PlaybackSlider.Bind(wx.EVT_SLIDER, self.onSliderScroll)
 
 
 	def create_menus(self):
@@ -107,11 +108,8 @@ class TimelineCtrl(wx.Panel):
 
 			self.song_length = self.mediaPlayer.Length()
 			self.song_frames = int( self.song_length / self.ms_per_frame)
-			self.PlaybackSlider.SetRange(0, self.song_frames)
-			self.PlaybackSlider.SetSize((self.GetClientSize()[0], 20))
 
 	def onPause(self, event):
-		print("pausing")
 		self.mediaPlayer.Pause()
 
 	def onStop(self, event):
@@ -123,12 +121,6 @@ class TimelineCtrl(wx.Panel):
 		self.data["Current Frame"] = 0
 		self.mediaPlayer.Seek(1)
 
-	def onSliderScroll(self, event):
-		"""
-		seeks to the equavalent position in the audio using the position to equal the frame * ms_per_frame
-		"""
-		offset = self.PlaybackSlider.GetValue()
-		self.mediaPlayer.Seek(int(offset * self.ms_per_frame))
 
 	def set_data(self, data):
 		#loads data and sets frames per second
@@ -146,10 +138,8 @@ class TimelineCtrl(wx.Panel):
 		future design: clicking should snap indicator to the closest frame, should follow
 				click and drag
 		"""
-		self.PP = PygamePanel(self, 1, self.ViewPortSize, self.window)
+		self.PP = PygamePanel(self, 1, self.ViewPortSize, self.window, self.listener)
 		self.mediaPlayer = wx.media.MediaCtrl(self, style=wx.SIMPLE_BORDER)
-		self.PlaybackSlider = wx.Slider(self, value=1, minValue=0,
-			maxValue= self.ViewPortSize[0], style=wx.SL_HORIZONTAL)
 
 		play_img = wx.Bitmap("./res/play.png", wx.BITMAP_TYPE_ANY)
 		self.play_btn = wx.BitmapButton(self, wx.ID_ANY, play_img, (30,30))
@@ -194,8 +184,6 @@ class TimelineCtrl(wx.Panel):
 				#if the alteration in FPS results in a lower num of frames truncates the frames to the new length
 				self.data["Frames"] = self.data["Frames"][:self.song_frames]
 			#resets the slider range and size to fit new frame length
-			self.PlaybackSlider.SetRange(0, self.song_frames)
-			self.PlaybackSlider.SetSize((self.GetClientSize()[0], 20))
 
 
 	def LoadAudio(self, event):
@@ -223,16 +211,17 @@ class TimelineCtrl(wx.Panel):
 
 		#attempts to load audio, called either from window.setdata() or from self.LoadAudio()
 		#occasionally fails for unpredictable reasons, rare but results in crash
-		try:
-			if not self.mediaPlayer.Load(pathname):
-				wx.MessageBox("Unable to load audio", "ERROR", wx.ICON_ERROR | wx.OK)
-			else:
-				self.data["Audio"] = pathname
-				self.gen_waveform()
-				self.loaded = True
-				self.window.Set_Forth_Status(pathname.split("\\")[-1])
-		except:
-			pass
+		#try:
+		if not self.mediaPlayer.Load(pathname):
+			wx.MessageBox("Unable to load audio", "ERROR", wx.ICON_ERROR | wx.OK)
+		else:
+			self.data["Audio"] = pathname
+			self.wavedata.gen_wavedata(self.data["Audio"])
+			self.gen_waveform()
+			self.loaded = True
+			self.window.Set_Forth_Status(pathname.split("\\")[-1])
+		#except:
+		#	pass
 
 	def gen_waveform(self):
 		"""
@@ -244,7 +233,7 @@ class TimelineCtrl(wx.Panel):
 		future update: sampler should be an object which retains the full data
 		making it much faster to load a new waveform on resize
 		"""
-		self.wave_data = sampler.breakdown(self.data["Audio"], self.ViewPortSize[0], self.ViewPortSize[1])
+		self.wave_data = self.wavedata.breakdown(self.ViewPortSize[0], self.ViewPortSize[1])
 		self.waveform.fill(GREY)
 		for x in range(len(self.wave_data)):
 			pygame.draw.line(self.waveform, RED, (x,self.waveform.get_height()), 
@@ -280,18 +269,14 @@ class TimelineCtrl(wx.Panel):
 
 		self.mainBox = wx.BoxSizer(wx.VERTICAL)
 		self.mainBox.Add(self.visBox,1)
-		self.mainBox.Add(self.PlaybackSlider, 1, wx.EXPAND)
 		self.mainBox.Add(self.button_panel)
-
-	def get_current_frame(self):
-		return int(self.PlaybackSlider.GetValue())
 
 	def Update(self, second):
 
 
 		if second:
 			self.time_counter += 1
-		if self.time_counter >= 5 and self.GetClientSize()[0] != self.ViewPortSize[0]:
+		if self.time_counter >= 1 and self.GetClientSize()[0] != self.ViewPortSize[0]:
 			"""
 			every five seconds it checks if the window was resized
 			if so then it resets the pygame panel, sliders, and waveform
@@ -301,9 +286,8 @@ class TimelineCtrl(wx.Panel):
 			as well as storing the waveform data for sampling at all times
 			"""
 			new_size = (self.GetClientSize()[0], self.ViewPortSize[1])
-			self.PlaybackSlider.SetSize((self.GetClientSize()[0], 20))
-			self.PP.set_size(new_size)
-			self.PP.layout()
+			#self.PP.set_size(new_size)
+			#self.PP.layout()
 			self.ViewPortSize = new_size
 			del self.waveform
 			self.waveform = pygame.Surface(self.ViewPortSize)
@@ -330,22 +314,24 @@ class TimelineCtrl(wx.Panel):
 				self.timeset = True
 			#if audio loaded, stopped, and the length of frames is 1, generates new frames to fill out the length
 			if self.loaded and self.timeset and len(self.data["Frames"]) == 1:
-				for frame in range(self.song_frames):
+				for frame in range(self.song_frames+2):
 					self.data["Frames"].append(copy.deepcopy(self.data["Frames"][0]))
 
-			#resets the playbackslider to the frame according to the time in milliseconds
-			offset = self.mediaPlayer.Tell()
-			self.PlaybackSlider.SetValue(int(offset / self.ms_per_frame))
-			if self.PlaybackSlider.GetMax() > 0:
-				self.current_pos = int((self.PlaybackSlider.GetValue() / self.PlaybackSlider.GetMax()) * self.ViewPortSize[0])
+			if self.listener.get_mouse_button(1):
+				self.data["Current Frame"] = int(self.listener.get_mouse_pos()[0]/self.ViewPortSize[0]*self.song_frames)
+				self.current_pos = int(self.data["Current Frame"]/self.song_frames*self.ViewPortSize[0])
+				self.mediaPlayer.Seek(self.data["Current Frame"] * self.ms_per_frame)
+			else:
+				offset = self.mediaPlayer.Tell()
+				ratio = offset/self.song_length
+				self.current_pos = int(ratio * self.ViewPortSize[0])
+				self.data["Current Frame"] = int(self.song_frames * ratio)
 
 			#draws an indicator on the pygame panel according to where the current position is
 			self.PP.draw(self.waveform, (0,0))
-			pygame.draw.line(self.PP.screen, GREEN, (self.current_pos-1, self.ViewPortSize[1]), (self.current_pos-1, 0), 1)
-			pygame.draw.line(self.PP.screen, GREEN, (self.current_pos+1, self.ViewPortSize[1]), (self.current_pos+1, 0), 1)
+			pygame.draw.line(self.PP.screen, GREEN, (self.current_pos-2, self.ViewPortSize[1]), (self.current_pos-2, 0), 3)
+			pygame.draw.line(self.PP.screen, GREEN, (self.current_pos+2, self.ViewPortSize[1]), (self.current_pos+2, 0), 3)
 			self.PP.Update()
-
-			self.data["Current Frame"] = self.get_current_frame()
 
 	def OnClose(self):
 		#pygame panel returns errors if attempting to close window without exiting pygame

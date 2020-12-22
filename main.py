@@ -32,10 +32,10 @@ Outline of future releases:
 
 2 - remove load check OBJ2D
 
-12- sampler turned into object to retain audio waveform data - timeline_ctrl, sampler
-13- remove slider and upgrade pygamepanel to act as timeline slider - timeline_ctrl
-14- remove full resize event from pygamepanel, make it larger than it needs to be only resize waveform - timeline_ctrl
-15- upgrade pygamepanel to act more like a pygame window with extra functionality - pygame_panel
+12- #sampler turned into object to retain audio waveform data - timeline_ctrl, sampler
+13- #remove slider and upgrade pygamepanel to act as timeline slider - timeline_ctrl
+14- #remove full resize event from pygamepanel, make it larger than it needs to be only resize waveform - timeline_ctrl
+15- ?upgrade pygamepanel to act more like a pygame window with extra functionality - pygame_panel
 
 22- add undo/redo feature, any time self.data is written to, copy.deepcopy to rolling list, add one to flow_control variable
 	undo moves flow_control variable back one, redo adds one, doesn't change if index = 0 or len(list)
@@ -52,6 +52,7 @@ Outline of future releases:
 
 11- add feedback and statusbar of ffmpeg render - render_video_dialog
 10- merge render frames and render to video - render_video_dialog, render_frames_dialog
+25- turn render panel into notebook, second page controls the current state of the render window
 
 16- turn state_ctrl into notebook - state_ctrl
 17- add overwrite panel to position panel - state_ctrl, pos_panel
@@ -59,8 +60,7 @@ Outline of future releases:
 19- add overwrite panel to scale panel - state_ctrl, scale_panel
 20- add flip panel to scale panel - state_ctrl, scale_panel
 
-used shortcuts: N, O, S, A, X, shft+S, I, L, U, J, G, H
-
+used shortcuts: N, O, S, A, X, shft+S, I, L, U, J, G, H, Z, Y
 
 Beta:
     number	nickname					change
@@ -70,9 +70,9 @@ Beta:
 [X] 1.1.0 - "Family Sticks Together"	5, 6, 7, 24, Basic Composite objects added, parent/child relationship
 [X] 1.2.0 - "Record me Daddy"			8, 9, add keybinds and fix mouse down, render_ctrl
 [X] 1.2.1 - 							1, 3, 4, 21,  Menu Overhaul
-[ ] 1.3.0 - "The Time Machine"			22, Add undo/redo
-[ ] 1.4.0 - "Soul Window"				12-15, Upgrade pygame panel to act as timeline control
-[ ] 1.5.0 -	"Ultimate Porpoise"			10, 11, render video overhaul
+[X] 1.3.0 - "The Time Machine"			22, Add undo/redo
+[X] 1.4.0 - "Soul Window"				12-15, Upgrade pygame panel to act as timeline control
+[ ] 1.5.0 -	"Ultimate Porpoise"			10, 11, 25, render video overhaul
 [ ] 1.6.0 - "State of the Union"		16, 17, 18, 19, 20, state_ctrl overhaul
 
 [ ] 2.0.0 - "FuuuuuTuuuuure"			Migrate to modern opengl
@@ -86,7 +86,7 @@ Beta:
 
 loc = 374	#code to date 3177
 
-version_name = "Monchy Puppet Theatre Beta 1.2.1"
+version_name = "Monchy Puppet Theatre Beta 1.4.1"
 
 class MainFrame(wx.Frame):
 	def __init__(self, parent, title, size):
@@ -103,7 +103,7 @@ class MainFrame(wx.Frame):
 		self.mainBox = wx.BoxSizer(wx.HORIZONTAL)
 
 		#add elements and panels here to allow them to make changes to the window
-		self.timelineCtrl = TimelineCtrl(self, wx.ID_ANY, self.data, self, (2000,50))
+		self.timelineCtrl = TimelineCtrl(self, wx.ID_ANY, self.data, self, self.listener)
 		self.renderCtrl = RenderCtrl(self, wx.ID_ANY, self.data, self, (1000,700), self.Image_list, self.listener)
 		self.objCtrl = objCtrl(self, self.data, self, self.Image_list)
 		self.stateCtrl = StateCtrl(self, wx.ID_ANY, self.data, self, self.listener)
@@ -170,6 +170,9 @@ class MainFrame(wx.Frame):
 		self.Bind(wx.EVT_MENU, self.SaveData, self.saveData)
 		self.Bind(wx.EVT_MENU, self.SaveAsData, self.saveAsData)
 
+		self.Bind(wx.EVT_MENU, self.UndoHistory, self.undoItem)
+		self.Bind(wx.EVT_MENU, self.RedoHistory, self.redoItem)
+
 		self.Bind(wx.EVT_MENU, self.On_tutorial, self.tutorial1)
 		self.Bind(wx.EVT_MENU, self.On_tutorial, self.tutorial2)
 		self.Bind(wx.EVT_MENU, self.On_tutorial, self.tutorial3)
@@ -194,6 +197,16 @@ class MainFrame(wx.Frame):
 		self.fileMenu.AppendSeparator()
 
 		self.menubar.Append(self.fileMenu, '&File')
+
+		self.editMenu = wx.Menu()
+
+		self.undoItem = wx.MenuItem(self.editMenu, wx.ID_ANY, "&Undo\tCtrl+Z", "Undo Action")
+		self.redoItem = wx.MenuItem(self.editMenu, wx.ID_ANY, "&Redo\tCtrl+Y", "Redo Action")
+
+		self.editMenu.Append(self.undoItem)
+		self.editMenu.Append(self.redoItem)
+
+		self.menubar.Append(self.editMenu, "&Edit")
 
 		#creates each control panel's menus in order
 		#the order these are called determines how the menus are laid out
@@ -293,6 +306,13 @@ class MainFrame(wx.Frame):
 		OnNew offers to save the current project if anything has been added
 		after it calls new_project to wipe everything clean
 		"""
+
+		if self.savedIndex != self.historyIndex:
+			box = wx.MessageDialog(None, 'Would you like to save the current project?',
+				"Unsaved work", wx.OK | wx.CANCEL | wx.ICON_WARNING)
+			if box.ShowModal() == wx.ID_OK:
+				self.SaveData(1)
+
 		with wx.FileDialog(self, "Load Animation", wildcard="ANI files (*.ani)|*.ani",
 							style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
 			if fileDialog.ShowModal() == wx.ID_CANCEL:
@@ -308,6 +328,7 @@ class MainFrame(wx.Frame):
 			self.objCtrl.LoadStatus()
 			self.pathname = pathname
 			self.SetTitle(("%s (%s)" % (version_name,  self.pathname.split("\\")[-1].split(".")[0])) )
+			self.ResetHistory()
 
 	def OnNew(self, event):
 		if len(self.data["Object List"]) > 1 or self.data["Audio"] != "":
@@ -317,9 +338,54 @@ class MainFrame(wx.Frame):
 		self.objCtrl.reload()
 		self.objCtrl.LoadStatus()
 
+	def ResetHistory(self):
+		self.editHistory = []
+		self.historyIndex = 0
+		self.savedIndex = 0
+		self.editHistory.append(copy.deepcopy(self.data))
+		print(len(self.editHistory))
+		print(self.historyIndex)
+
+	def PushHistory(self):
+		if self.historyIndex < (len(self.editHistory) - 1):
+			print("truncated history")
+			self.editHistory = self.editHistory[:self.historyIndex+1]
+		self.editHistory.append(copy.deepcopy(self.data))
+		self.historyIndex += 1
+		print(len(self.editHistory))
+		print(self.historyIndex)
+
+	def UndoHistory(self, event):
+		print("undoing")
+		self.historyIndex -= 1
+		if self.historyIndex < 0:
+			self.historyIndex = 0
+		else:
+			self.data = copy.deepcopy(self.editHistory[self.historyIndex])
+		print(len(self.editHistory))
+		print(self.historyIndex)
+		self.set_data()
+		self.objCtrl.reload()
+		self.objCtrl.LoadStatus()
+
+	def RedoHistory(self, event):
+		print("redoing")
+		self.historyIndex += 1
+		if historyIndex >= len(self.editHistory):
+			self.historyIndex -= 1
+		else:
+			self.data = copy.deepcopy(self.editHistory[self.historyIndex])
+		print(len(self.editHistory))
+		print(self.historyIndex)
+		self.set_data()
+		self.objCtrl.reload()
+		self.objCtrl.LoadStatus()
+
 	def new_project(self, startup):
 		#sets the animation state data into default, for more details see data_default.py
 		self.data = copy.deepcopy(data_default.data)
+		self.savedIndex = 0
+		self.ResetHistory()
 
 		#dict, holds all images as opengl textures "image name":obj2d
 		self.Image_list = {}
@@ -367,8 +433,15 @@ class MainFrame(wx.Frame):
 			wx.LogError("Cannot save current data in file %s" % pathname)
 		self.pathname = pathname
 		self.SetTitle(("%s (%s)" % (version_name,  self.pathname.split("\\")[-1].split(".")[0])))
+		self.savedIndex = self.historyIndex
 
 	def OnClose(self, event):
+		#add "would you like to save"
+		if self.savedIndex != self.historyIndex:
+			box = wx.MessageDialog(None, 'Would you like to save the current project?',
+				"Unsaved work", wx.OK | wx.CANCEL | wx.ICON_WARNING)
+			if box.ShowModal() == wx.ID_OK:
+				self.SaveData(1)
 		wx.Exit()
 		exit()
 

@@ -17,7 +17,7 @@ class PygamePanel(wx.Panel):
 	future adjustments are to turn this into a more functional embdedded pygame panel
 	with options to inherit from it maing creation of such panels easier
 	"""
-	def __init__(self, parent, ID, ViewPortSize, window):
+	def __init__(self, parent, ID, ViewPortSize, window, listener):
 		"""
 		the following code is modified from a post by:
 			https://stackoverflow.com/users/1747037/alex-sallons
@@ -42,6 +42,8 @@ class PygamePanel(wx.Panel):
 
 		### everything above this is completely nessesary as is
 
+		self.listener = listener
+		self.parent = parent
 		self.SetBackgroundColour((10,100,10))
 		self.set_clear_color((0,0,0))
 		self.set_size(ViewPortSize)
@@ -65,11 +67,22 @@ class PygamePanel(wx.Panel):
 		self.screen.blit(image, pos)
 
 	def Update(self):
-
 		#swaps the buffers and then clears the new buffer before drawing
 		#not strictly nessesary but useful for current purposes
 		pygame.display.flip()
 		self.screen.fill(self.clear_color)
-
+		for event in pygame.event.get():
+			if event.type == pygame.KEYDOWN:
+				self.listener.set_keydown(event.key)
+			elif event.type == pygame.KEYUP:
+				self.listener.set_keyup(event.key)
+			elif event.type == pygame.MOUSEBUTTONDOWN:
+				self.listener.set_mouse_down(event.button)
+			elif event.type == pygame.MOUSEBUTTONUP:
+				self.listener.set_mouse_up(event.button)
+			else:
+				pass
+		self.listener.set_mouse_pos(pygame.mouse.get_pos())
+		
 	def OnClose(self):
 		pygame.quit()

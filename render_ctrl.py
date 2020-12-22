@@ -201,6 +201,7 @@ class RenderCtrl(wx.Panel):
 			if self.data["Object List"][self.data["Current Object"]]["Children"] != []:
 				for child in self.data["Object List"][self.data["Current Object"]]["Children"]:
 					self.data["Frames"][self.data["Current Frame"]][ child ]["Pos"][2] = obj["Dist"] + self.data["Frames"][self.data["Current Frame"]][ child ]["Dist"]
+		self.window.PushHistory()
 
 	def set_data(self, data):
 		#resets all data within the control panel in order to eitehr load a project
@@ -244,6 +245,7 @@ class RenderCtrl(wx.Panel):
 		self.middle_mouse_click = False
 		self.right_mouse_click = False
 		self.canvas.ReleaseMouse()
+		self.window.PushHistory()
 
 	def OnMouseMotion(self, event):
 		#when mouse is moved triggers this event
