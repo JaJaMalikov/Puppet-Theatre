@@ -55,8 +55,8 @@ class objCtrl(wx.Panel):
 		self.objList = ObjectList(self.mainBook, wx.ID_ANY, self.data, self.window, self)
 		self.imgList = ImageList(self.mainBook, wx.ID_ANY, self.data, self.window, self, self.Image_list)
 
-		self.mainBook.AddPage(self.objList , "objects" )
-		self.mainBook.AddPage(self.imgList , "images" )
+		self.mainBook.AddPage(self.objList , "Objects" )
+		self.mainBook.AddPage(self.imgList , "Images" )
 
 	def set_layout(self):
 		mainBox = wx.BoxSizer(wx.HORIZONTAL)

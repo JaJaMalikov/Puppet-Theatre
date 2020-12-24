@@ -13,7 +13,7 @@ import verts
 loc = 127
 
 class OBJ2D:
-	def __init__(self, pathname):
+	def __init__(self, pathname, window):
 		#sets the default state, copying the verts, coords, and edges from verts
 		#loads the texture from pathname
 		self.pathname = pathname
@@ -21,6 +21,7 @@ class OBJ2D:
 		self.verts = copy.deepcopy(verts.verts)
 		self.coords = copy.deepcopy(verts.coords)
 		self.edges = copy.deepcopy(verts.edges)
+		self.canvas = window.renderCtrl.canvas
 
 		self.texture = self.load_texture()
 
@@ -55,28 +56,8 @@ class OBJ2D:
 		texture is bound to an ID which is saved as self.texture
 		this uses the old opengl fixed function pipeline and will be replaced with Beta 2
 		"""
-		glEnable(GL_TEXTURE_2D)
-		texture = glGenTextures(1)
-		glBindTexture(GL_TEXTURE_2D, texture)
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, self.width, self.height,
-					0, GL_RGBA, GL_UNSIGNED_BYTE, textureData)
+		return self.canvas.loadTexture(textureData, self.width, self.height)
 
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-
-		glGenerateMipmap(GL_TEXTURE_2D)
-		return texture
-
-	def transform(self, inData, scale_mod, child):
-		if child:
-			glTranslatef(inData["Pos"][0], inData["Pos"][1], 0.0 )
-		else:
-			glTranslatef(inData["Pos"][0], inData["Pos"][1], inData["Pos"][2] )
-
-		glRotatef(inData["Angle"], 0, 0, 1)
-		glScalef(inData["FlipX"] * inData["ScaleX"] * scale_mod, inData["FlipY"] * inData["ScaleY"] * scale_mod, 1.0)
 
 	def draw(self, inData, scale_mod = 1.0, parent = None):
 		"""
@@ -85,46 +66,16 @@ class OBJ2D:
 		future plans include an additional transformation step for the parent 
 		before the transformation step for the child
 		"""
-		glBindTexture(GL_TEXTURE_2D, self.texture)
-
-		glPushMatrix()
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-		glEnable(GL_BLEND)
+		self.canvas.prepTexture(self.texture)
 
 		if parent != None:
-			self.transform(parent, scale_mod, False)
-			self.transform(inData, scale_mod, True)
+			self.canvas.transform(parent, False)
+			self.canvas.transform(inData, True)
 		else:
-			self.transform(inData, scale_mod, False)
+			self.canvas.transform(inData, False)
 		#transformation step
 
-		glBegin(GL_POLYGON)
+		self.canvas.drawTexture(self.verts, self.coords)
 
-		for x in range(len(self.verts)):
-			glTexCoord2f(*self.coords[x])
-			glVertex3f(*self.verts[x])
-
-		glEnd()
-		glDisable(GL_BLEND)
-		glPopMatrix()
-
-	def draw_wire(self, inData, scale_mod = 1.0):
-		"""
-		wire drawing for possible debug mode
-		"""
-		glBindTexture(GL_TEXTURE_2D, self.texture)
-
-		glPushMatrix()
-
-		glTranslatef(inData["Pos"][0], inData["Pos"][1], inData["Pos"][2] )
-		glRotatef(inData["Angle"], 0, 0, 1)
-		glScalef(inData["FlipX"] * inData["ScaleX"] * scale_mod, inData["FlipY"] * inData["ScaleY"] * scale_mod, 1.0)
-
-		glBegin(GL_LINES)
-
-		for Edge in self.edges:
-			for Vertex in Edge:
-				glVertex3fv(self.verts[Vertex])
-
-		glEnd()
-		glPopMatrix()
+	def draw_wire(self, inData):
+		self.canvas.draw_wire(inData, self.texture, self.verts, self.edges)

@@ -1,8 +1,5 @@
 #Graphical libraries
 import wx
-from wx import glcanvas
-from OpenGL.GL import *
-from OpenGL.GLU import *
 import pygame
 
 #built-in libraries
@@ -15,14 +12,13 @@ from consts import *
 
 #opengl canvas basic implmentation
 from canvas_base import CanvasBase
-from render_frames_dialog import RenderImgsDialog
 from render_video_dialog import RenderVideoDialog
 import data_default
 from listener import Key_listener
 
 loc = 704
 
-version_name = "Monchy PT Render Control Panel Beta 1.0.1"
+version_name = "Monchy PT Render Control Panel Beta 1.5.0"
 
 class RenderCtrl(wx.Panel):
 	"""
@@ -45,6 +41,13 @@ class RenderCtrl(wx.Panel):
 		self.middle_mouse_click = False
 		self.right_mouse_click = False
 
+		self.resolutions = {
+			"1080p":[1920,1080], 
+			"720p":[1280,720], 
+			"VGA":[640,480], 
+			"4K":[4096,2160], 
+			"8K":[8192,4320]}
+
 		#builds the panel and sets layout, binds functions to actions
 		self.build()
 		self.set_layout()
@@ -52,23 +55,46 @@ class RenderCtrl(wx.Panel):
 		self.bind_all()
 
 	def build(self):
+		self.mainBook = wx.Notebook(self)
+		self.canvasPage = wx.Panel(self.mainBook, wx.ID_ANY)
+		self.settingPage = wx.Panel(self.mainBook, wx.ID_ANY)
+
 		#creates a red, green, and blue slider to control the background color of the canvas
-		self.r_slider = wx.Slider(self, value = 1, minValue = 0, maxValue = 100, 
-			style=wx.ALIGN_CENTER_VERTICAL|wx.SL_HORIZONTAL)
+		self.r_slider = wx.Slider(self.settingPage, value = 0, minValue = 0, maxValue = 100, 
+			style=wx.ALIGN_CENTER_VERTICAL|wx.SL_HORIZONTAL, size=(300,25))
 
-		self.g_slider = wx.Slider(self, value = 1, minValue = 0, maxValue = 100, 
-			style=wx.ALIGN_CENTER_VERTICAL|wx.SL_HORIZONTAL)
+		self.g_slider = wx.Slider(self.settingPage, value = 0, minValue = 0, maxValue = 100, 
+			style=wx.ALIGN_CENTER_VERTICAL|wx.SL_HORIZONTAL, size=(300,25))
 
-		self.b_slider = wx.Slider(self, value = 1, minValue = 0, maxValue = 100, 
-			style=wx.ALIGN_CENTER_VERTICAL|wx.SL_HORIZONTAL)
+		self.b_slider = wx.Slider(self.settingPage, value = 0, minValue = 0, maxValue = 100, 
+			style=wx.ALIGN_CENTER_VERTICAL|wx.SL_HORIZONTAL, size=(300,25))
+
+		self.r_textbox = wx.TextCtrl(self.settingPage, value="0", style=wx.TE_PROCESS_ENTER)
+		self.g_textbox = wx.TextCtrl(self.settingPage, value="0", style=wx.TE_PROCESS_ENTER)
+		self.b_textbox = wx.TextCtrl(self.settingPage, value="0", style=wx.TE_PROCESS_ENTER)
 
 		#sets the background color according to the current value of the sliders
-		self.btn1 = wx.Button(self, 1, "set")
+		self.btn1 = wx.Button(self.settingPage, 1, "set")
 		#the drawable opengl canvas itself, implemented as canvasbase
-		self.canvas = CanvasBase(self, self.ViewPortSize, self.data)
+		self.canvas = CanvasBase(self.canvasPage, self.ViewPortSize, self.data)
+
+		self.res_selector = wx.ComboBox(self.settingPage, style=wx.CB_DROPDOWN, choices=list(self.resolutions.keys()))
+		self.res_selector.SetValue("1080p")
+
+		self.angle_selector = wx.Slider(self.settingPage, value=45, minValue=10, maxValue=180,
+			style=wx.ALIGN_CENTER_VERTICAL|wx.SL_HORIZONTAL|wx.SL_LABELS)
+
+		self.canvas.set_resolution(self.resolutions["1080p"])
+
+		self.res_button = wx.Button(self.settingPage, 1, "Change Resolution")
 
 	def bind_all(self):
+		self.r_slider.Bind(wx.EVT_SLIDER, self.OnColorSlide)
+		self.g_slider.Bind(wx.EVT_SLIDER, self.OnColorSlide)
+		self.b_slider.Bind(wx.EVT_SLIDER, self.OnColorSlide)
+
 		self.btn1.Bind(wx.EVT_BUTTON, self.SetBackgroundColor)
+		self.res_button.Bind(wx.EVT_BUTTON, self.OnRes_button)
 
 		self.canvas.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseScroll)
 
@@ -83,11 +109,35 @@ class RenderCtrl(wx.Panel):
 
 		self.canvas.Bind(wx.EVT_MOTION, self.OnMouseMotion)
 
+		self.angle_selector.Bind(wx.EVT_SLIDER, self.OnAngleChange)
 
 		self.canvas.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
 		self.canvas.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
 		#self.window.Bind(wx.EVT_CHAR, self.OnKeyDown)
 		#self.window.timelineCtrl.PP.Bind(wx.EVT_CHAR, self.OnKeyDown)
+
+		self.r_textbox.Bind(wx.EVT_TEXT_ENTER, self.OnTextColor)
+		self.g_textbox.Bind(wx.EVT_TEXT_ENTER, self.OnTextColor)
+		self.b_textbox.Bind(wx.EVT_TEXT_ENTER, self.OnTextColor)
+
+	def OnAngleChange(self, event):
+		self.canvas.set_view_angle(self.angle_selector.GetValue())
+
+	def OnRes_button(self, event):
+		self.canvas.set_resolution(self.resolutions[self.res_selector.GetStringSelection()])
+		self.resize_viewbox()
+
+	def OnTextColor(self, event):
+		print("hit enter")
+		self.r_slider.SetValue(int(int(self.r_textbox.GetValue())/2.55))
+		self.g_slider.SetValue(int(int(self.g_textbox.GetValue())/2.55))
+		self.b_slider.SetValue(int(int(self.b_textbox.GetValue())/2.55))
+
+	def OnColorSlide(self, event):
+		#multiply slider value by 3.65 to get rgb
+		self.r_textbox.SetValue(str(int(self.r_slider.GetValue()*2.555)))
+		self.g_textbox.SetValue(str(int(self.g_slider.GetValue()*2.555)))
+		self.b_textbox.SetValue(str(int(self.b_slider.GetValue()*2.555)))
 
 	def OnKeyDown(self, event):
 		self.prev_frame = self.data["Current Frame"]
@@ -102,15 +152,40 @@ class RenderCtrl(wx.Panel):
 		event.Skip()
 
 	def set_layout(self):
-		self.color_box = wx.BoxSizer(wx.HORIZONTAL)
+
+		self.color_box = wx.BoxSizer(wx.VERTICAL)
+
 		self.color_box.Add(self.r_slider)
 		self.color_box.Add(self.g_slider)
 		self.color_box.Add(self.b_slider)
 		self.color_box.Add(self.btn1)
 
-		self.mainBox = wx.BoxSizer(wx.VERTICAL)
-		self.mainBox.Add(self.color_box)
-		self.mainBox.Add(self.canvas, 1, wx.EXPAND)
+		self.color_box.Add(self.res_selector)
+		self.color_box.Add(self.res_button)
+
+		self.color_box.Add(self.angle_selector)
+
+		self.text_box = wx.BoxSizer(wx.VERTICAL)
+		self.text_box.Add(self.r_textbox)
+		self.text_box.Add(self.g_textbox)
+		self.text_box.Add(self.b_textbox)
+
+		self.settingbox = wx.BoxSizer(wx.HORIZONTAL)
+
+		self.settingbox.Add(self.color_box)
+		self.settingbox.Add(self.text_box)
+
+		self.settingPage.SetSizer(self.settingbox)
+
+		self.canvasBox = wx.BoxSizer(wx.VERTICAL)
+		self.canvasBox.Add(self.canvas, 1, wx.EXPAND)
+		self.canvasPage.SetSizer(self.canvasBox)
+
+		self.mainBook.AddPage(self.canvasPage, "Canvas")
+		self.mainBook.AddPage(self.settingPage, "Settings")
+
+		self.mainBox = wx.BoxSizer(wx.HORIZONTAL)
+		self.mainBox.Add(self.mainBook, 4, wx.EXPAND)
 		self.SetSizer(self.mainBox)
 
 	def On_set_videoname(self, event):
@@ -123,18 +198,7 @@ class RenderCtrl(wx.Panel):
 
 			pathname = fileDialog.GetPath()
 			self.data["Video Name"] = pathname
-
-	def On_set_working_dir(self, event):
-		#sets the working directory to render all frames to
-		with wx.DirDialog(self, "Choose working directory:", "",
-			style=wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST) as dirDialog:
-
-			if dirDialog.ShowModal() == wx.ID_CANCEL:
-				return
-
-			pathname = dirDialog.GetPath()
-			self.data["Render Dir"] = pathname
-
+			self.data["Render Dir"] = pathname.rsplit("\\",1)[0]
 
 	def create_menus(self):
 		#builds the render menu
@@ -147,32 +211,14 @@ class RenderCtrl(wx.Panel):
 		self.set_videoname = wx.MenuItem(self.renderMenu, wx.ID_ANY, "&Video name", "Choose name for output video")
 		self.renderMenu.Append(self.set_videoname)
 
-		self.set_working_dir = wx.MenuItem(self.renderMenu, wx.ID_ANY, "&Choose Directory", "Choose output directory")
-		self.renderMenu.Append(self.set_working_dir)
-
-		self.render_imgs = wx.MenuItem(self.renderMenu, wx.ID_ANY, "&Render Frames", "Render project as frames")
-		self.renderMenu.Append(self.render_imgs)
-
 		self.render_video = wx.MenuItem(self.renderMenu, wx.ID_ANY, "&Render Video", "Render frames as video")
 		self.renderMenu.Append(self.render_video)
 
 		self.window.menubar.Append(self.renderMenu, '&Render')
 
-		self.window.Bind(wx.EVT_MENU, self.On_render_imgs, self.render_imgs)
 		self.window.Bind(wx.EVT_MENU, self.On_render_video, self.render_video)
 
 		self.window.Bind(wx.EVT_MENU, self.On_set_videoname, self.set_videoname)
-		self.window.Bind(wx.EVT_MENU, self.On_set_working_dir, self.set_working_dir)
-
-	def On_render_imgs(self, event):
-		#creates the render frames dialog box
-		#if no render directory has been set asks user for one
-		if self.data["Render Dir"] == "":
-			self.On_set_working_dir(event)
-		render_dialog = RenderImgsDialog(None)#, window = self.window)
-		render_dialog.set_window(self.window)
-		render_dialog.ShowModal()
-		render_dialog.Destroy()
 
 	def On_render_video(self, event):
 		#if no render dir has been set asks user for one
@@ -311,18 +357,6 @@ class RenderCtrl(wx.Panel):
 		self.canvas.set_bg((self.r_slider.GetValue()/100,self.g_slider.GetValue()/100,self.b_slider.GetValue()/100, 0.0) )
 		self.data["Background Color"] = [self.r_slider.GetValue()/100,self.g_slider.GetValue()/100,self.b_slider.GetValue()/100, 0.0]
 
-	def Reset_Canvas(self):
-		#sets the canvas to the camera on the current frame's pos, scale, rot
-		#giving the user full control over the camera from frame to frame
-		cam = self.data["Frames"][self.data["Current Frame"]]["Camera"]
-		glTranslatef(cam["Pos"][0],
-					cam["Pos"][1],
-					cam["Pos"][2])
-
-		glRotatef(cam["Angle"], 0, 0, 1)
-		glScalef(cam["FlipX"] * cam["ScaleX"],
-				cam["FlipY"] * cam["ScaleY"], 1.0)
-
 	def Update(self, second):
 		#if self.canvas.HasFocus():
 		#	if self.listener.get_struck()
@@ -370,8 +404,8 @@ class RenderCtrl(wx.Panel):
 
 		self.window.Set_Fifth_Status( str(self.data["Current Frame"]))
 		self.canvas.clear()
-		self.canvas.Purge()
-		self.Reset_Canvas()
+		self.canvas.Purge(self.canvas.ViewPortSize)
+		self.canvas.transform(self.data["Frames"][self.data["Current Frame"]]["Camera"], False)
 		self.Draw()
 
 	def resize_viewbox(self):
@@ -389,33 +423,22 @@ class RenderCtrl(wx.Panel):
 		self.canvas_ratio = self.width_pixels/self.height_pixels
 		self.pix_ratio = self.height_pixels/self.width_pixels
 		self.width_coords = self.canvas_ratio * self.height_coords
-		self.box_width = self.width_coords * .8
-		self.box_height = self.box_width * .5625
+		self.canvas.box_width = self.width_coords * .8
+		self.canvas.box_height = self.canvas.box_width * (self.canvas.resolution[1] / self.canvas.resolution[0])
 
 
 		self.px_ratio = self.height_pixels / self.width_pixels
 
-		self.px_width = int(1920 * 1.25)
+		self.px_width = int(self.canvas.resolution[0] * 1.25)
 		self.px_height = int(self.px_width * self.px_ratio)
 
+		print(self.px_width, self.px_height)
+
 		self.xoffset = int((self.px_width * .2) / 2)
-		self.yoffset = int((self.px_height * (1-(1080/self.px_height) )/2 ))
+		self.yoffset = int((self.px_height * (1-(self.canvas.resolution[1]/self.px_height) )/2 ))
 
-		plane_texture = glGenTextures(1)
-		glBindTexture(GL_TEXTURE_2D, plane_texture)
+		self.canvas.gen_fbo(self.px_width, self.px_height)
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, self.px_width, self.px_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, None)
-		glBindTexture(GL_TEXTURE_2D, 0)
-
-		self.FBO = glGenFramebuffers(1)
-		glBindFramebuffer(GL_FRAMEBUFFER, self.FBO)
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, plane_texture, 0)
-		glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
 	def Draw(self):
 		#draw all objects here
@@ -461,44 +484,7 @@ class RenderCtrl(wx.Panel):
 		#draws a box on screen with a ratio of 1.78:1
 		#outlines where the actual video will be rendered from
 		if not self.window.rendering:
-			glBindTexture(GL_TEXTURE_2D, 0)
-			glPushMatrix()
-			glLineWidth(4)
-			glColor4f(0.0,1.0,0.0,1.0)
-
-			self.canvas.Purge()
-
-			glBegin(GL_LINE_LOOP)
-
-			glVertex3f(-self.box_width, 
-				self.box_height, 0.0)
-			glVertex3f(self.box_width, 
-				self.box_height, 0.0)
-			glVertex3f(self.box_width, 
-				-self.box_height, 0.0)
-			glVertex3f(-self.box_width, 
-				-self.box_height, 0.0)
-
-			glEnd()
-
-			glLineWidth(2)
-			glColor4f(1.0,0.0,1.0,1.0)
-			glBegin(GL_LINE_LOOP)
-
-			glVertex3f(-self.box_width, 
-				self.box_height, 0.0)
-			glVertex3f(self.box_width, 
-				self.box_height, 0.0)
-			glVertex3f(self.box_width, 
-				-self.box_height, 0.0)
-			glVertex3f(-self.box_width, 
-				-self.box_height, 0.0)
-
-
-			glEnd()
-
-			glColor4f(1.0,1.0,1.0,1.0)
-			glPopMatrix()
+			self.canvas.draw_box()
 
 		#renders everything by swapping the buffers
 		self.canvas.Draw()

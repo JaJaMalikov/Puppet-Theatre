@@ -240,7 +240,7 @@ class ImageList(wx.Panel ):
 		#only creates the OBJ2D if one doesn't exist
 		#all objects using the same image will draw from the same OBJ2D
 		if pathname not in self.Image_list.keys():
-			self.Image_list[img_tag ] = OBJ2D(pathname)
+			self.Image_list[img_tag ] = OBJ2D(pathname, self.window)
 
 		#new identifies the image as one not currently in the current object
 		if new:

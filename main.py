@@ -50,9 +50,11 @@ Outline of future releases:
 7 - check if update_object is needed - object_ctrl (yes it is)
 24- add limited object composition - object_ctrl (very limited but it works!)
 
-11- add feedback and statusbar of ffmpeg render - render_video_dialog
-10- merge render frames and render to video - render_video_dialog, render_frames_dialog
-25- turn render panel into notebook, second page controls the current state of the render window
+25- #turn render panel into notebook, second page controls the current state of the render window
+10- #merge render frames and render to video - render_video_dialog, render_frames_dialog
+27- #renders to multiple resolutions
+11- ?add feedback and statusbar of ffmpeg render - render_video_dialog
+26- #render output compatible with #youtube and Xtwitter
 
 16- turn state_ctrl into notebook - state_ctrl
 17- add overwrite panel to position panel - state_ctrl, pos_panel
@@ -72,8 +74,8 @@ Beta:
 [X] 1.2.1 - 							1, 3, 4, 21,  Menu Overhaul
 [X] 1.3.0 - "The Time Machine"			22, Add undo/redo
 [X] 1.4.0 - "Soul Window"				12-15, Upgrade pygame panel to act as timeline control
-[ ] 1.5.0 -	"Ultimate Porpoise"			10, 11, 25, render video overhaul
-[ ] 1.6.0 - "State of the Union"		16, 17, 18, 19, 20, state_ctrl overhaul
+[X] 1.5.0 -	"Ultimate Porpoise"			10, 11, 25, 26, 27, render video overhaul
+[-] 1.6.0 - "State of the Union"		16, 17, 18, 19, 20, state_ctrl overhaul
 
 [ ] 2.0.0 - "FuuuuuTuuuuure"			Migrate to modern opengl
 [ ] 2.0.1 - 							Code refactored, commented, and made maintainable
@@ -81,12 +83,11 @@ Beta:
 
 [ ] 3.0.0 - "I C what you did there"	Migrate to C++
 [ ] 3.0.1 - 							Code refactored, commented, and made maintainable
-
 """
 
 loc = 374	#code to date 3177
 
-version_name = "Monchy Puppet Theatre Beta 1.4.1"
+version_name = "Monchy Puppet Theatre Beta 1.5.0"
 
 class MainFrame(wx.Frame):
 	def __init__(self, parent, title, size):
