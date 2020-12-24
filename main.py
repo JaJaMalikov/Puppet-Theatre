@@ -106,7 +106,7 @@ class MainFrame(wx.Frame):
 		#add elements and panels here to allow them to make changes to the window
 		self.timelineCtrl = TimelineCtrl(self, wx.ID_ANY, self.data, self, self.listener)
 		self.renderCtrl = RenderCtrl(self, wx.ID_ANY, self.data, self, (1000,700), self.Image_list, self.listener)
-		self.objCtrl = objCtrl(self, self.data, self, self.Image_list)
+		self.objCtrl = objCtrl(self, self.data, self, self.Image_list, self.listener)
 		self.stateCtrl = StateCtrl(self, wx.ID_ANY, self.data, self, self.listener)
 		#creates menus and tells all control panels to set their menus as well
 		self.create_menus()
@@ -270,12 +270,14 @@ class MainFrame(wx.Frame):
 			self.timelineCtrl.Update(True)
 			self.renderCtrl.Update(True)
 			self.stateCtrl.Update(True)
+			self.objCtrl.Update(True)
 
 		else:
 			self.ticks += 1
 			self.timelineCtrl.Update(False)
 			self.renderCtrl.Update(False)
 			self.stateCtrl.Update(False)
+			self.objCtrl.Update(False)
 		self.listener.clear_struck()
 
 		#statusbar set functions, to be compressed into single function "Set_Status"

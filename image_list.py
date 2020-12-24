@@ -16,13 +16,14 @@ class ImageList(wx.Panel ):
 	displays list of current objects images
 	allows to create/delete images, select current image with double-click
 	"""
-	def __init__(self, parent, ID, data, window, frame, Image_list):
+	def __init__(self, parent, ID, data, window, frame, Image_list, listener):
 		wx.ListBox.__init__(self, parent, ID)
 		self.Image_list = Image_list
 		self.parent = parent
 		self.data = data
 		self.window = window
 		self.frame = frame
+		self.listener = listener
 		self.build()
 		self.set_layout()
 		self.bind_all()
@@ -61,6 +62,9 @@ class ImageList(wx.Panel ):
 
 		self.overwrite_past.Bind(wx.EVT_BUTTON, self.On_overwrite_past)
 		self.overwrite_future.Bind(wx.EVT_BUTTON, self.On_overwrite_future)
+
+		self.imgList.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
+		self.imgList.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
 
 	def set_layout(self):
 		self.buttonSizer = wx.BoxSizer(wx.VERTICAL)
@@ -108,6 +112,20 @@ class ImageList(wx.Panel ):
 		self.overwrite_future = wx.Button(self.overwrite_panel, label="Subsequent", pos=(0,66))
 		self.overwrite_past = wx.Button(self.overwrite_panel, label="Preceeding", pos=(85,66))
 
+	def OnKeyDown(self, event):
+		print(event.GetKeyCode())
+		self.listener.set_keydown(event.GetKeyCode())
+		event.Skip()
+
+	def OnKeyUp(self, event):
+		self.listener.set_keyup(event.GetKeyCode())
+		event.Skip()
+
+	def Update(self, second):
+		if self.listener.get_struck(13):
+			print("hit enter")
+			self.On_overwrite_next(1)
+		self.listener.clear_struck()
 
 	def On_overwrite_future(self, event):
 		#overwrites all future images with currently select image

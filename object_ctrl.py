@@ -35,11 +35,12 @@ class objCtrl(wx.Panel):
 	allows for per-frame control over currently selected objects
 	and their currently available images
 	"""
-	def __init__(self, parent, data, window, Image_list):
+	def __init__(self, parent, data, window, Image_list, listener):
 		wx.Panel.__init__(self, parent,style = wx.RAISED_BORDER)
 		self.data = data
 		self.window = window
 		self.Image_list = Image_list
+		self.listener = listener
 
 		self.build()
 		self.set_layout()
@@ -53,7 +54,7 @@ class objCtrl(wx.Panel):
 		#contains both panels in a tab-based notebook for better organization
 		self.mainBook = wx.Notebook(self)
 		self.objList = ObjectList(self.mainBook, wx.ID_ANY, self.data, self.window, self)
-		self.imgList = ImageList(self.mainBook, wx.ID_ANY, self.data, self.window, self, self.Image_list)
+		self.imgList = ImageList(self.mainBook, wx.ID_ANY, self.data, self.window, self, self.Image_list, self.listener)
 
 		self.mainBook.AddPage(self.objList , "Objects" )
 		self.mainBook.AddPage(self.imgList , "Images" )
@@ -68,7 +69,7 @@ class objCtrl(wx.Panel):
 		self.objList.create_menus()
 
 	def Update(self, second):
-		pass
+		self.imgList.Update(second)
 
 	def set_data(self, data):
 		#loads data to load new or old projects

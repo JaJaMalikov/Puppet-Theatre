@@ -1,0 +1,6 @@
+parent:pacman
+icon:profile.png
+mouth:z|open,x|closed
+dirs:down|fore
+states:a|default
+substates:q|default

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="FPT" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Release">
+				<Option output="FPT" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-std=c++14" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add library="sfml-graphics" />
+					<Add library="sfml-audio" />
+					<Add library="sfml-network" />
+					<Add library="sfml-window" />
+					<Add library="sfml-system" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-std=c++14" />
+			<Add option="-fexceptions" />
+			<Add directory="C:/Users/Atlas/Documents/gauntlett/dev/FPT - various/a5-c++/sfml/include" />
+			<Add directory="C:/Users/Atlas/Documents/gauntlett/dev/FPT - various/a5-c++/glew/include" />
+			<Add directory="C:/Users/Atlas/Documents/gauntlett/dev/FPT - various/a5-c++/glm" />
+		</Compiler>
+		<Linker>
+			<Add library="sfml-graphics" />
+			<Add library="sfml-audio" />
+			<Add library="sfml-network" />
+			<Add library="sfml-window" />
+			<Add library="sfml-system" />
+			<Add library="glew32s" />
+			<Add library="glu32" />
+			<Add library="opengl32" />
+			<Add directory="C:/Users/Atlas/Documents/gauntlett/dev/FPT - various/a5-c++/sfml/lib" />
+			<Add directory="C:/Users/Atlas/Documents/gauntlett/dev/FPT - various/a5-c++/glew/lib/Release/Win32" />
+			<Add directory="C:/Users/Atlas/Documents/gauntlett/dev/FPT - various/a5-c++/glm" />
+		</Linker>
+		<Unit filename="antialias.frag" />
+		<Unit filename="atlas.mod" />
+		<Unit filename="character.cpp" />
+		<Unit filename="character.h" />
+		<Unit filename="def.h" />
+		<Unit filename="main.cpp" />
+		<Unit filename="openal32.dll" />
+		<Unit filename="prop.cpp" />
+		<Unit filename="prop.h" />
+		<Unit filename="roller.cpp" />
+		<Unit filename="roller.h" />
+		<Unit filename="sfml-audio-2.dll" />
+		<Unit filename="sfml-audio-d-2.dll" />
+		<Unit filename="sfml-graphics-2.dll" />
+		<Unit filename="sfml-graphics-d-2.dll" />
+		<Unit filename="sfml-network-2.dll" />
+		<Unit filename="sfml-network-d-2.dll" />
+		<Unit filename="sfml-system-2.dll" />
+		<Unit filename="sfml-system-d-2.dll" />
+		<Unit filename="sfml-window-2.dll" />
+		<Unit filename="sfml-window-d-2.dll" />
+		<Extensions>
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
