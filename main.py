@@ -6,6 +6,7 @@ from datetime import datetime
 import webbrowser
 import json
 import copy
+import sys
 
 #Control panels
 from object_ctrl import objCtrl
@@ -24,6 +25,7 @@ loads and organizes the control panels
 
 Outline of future releases:
 
+###################################################finished changes#################################
 1 - turn help menus into a single function X
 3 - move imagelist menus to imagelist - object_ctrl, image_list X
 4 - move objectlist menus to object_list - object_ctrl, object_list X
@@ -62,6 +64,17 @@ Outline of future releases:
 19- add overwrite panel to scale panel - state_ctrl, scale_panel
 20- add flip panel to scale panel - state_ctrl, scale_panel
 
+#########################################finished changes################################################
+
+28- heirarchical drawing proccess:
+	list all parents:
+		parent.draw():  <-----------|
+			self.transform()        |
+			for child in children:  |
+				child.draw() -------|
+
+
+
 used shortcuts: N, O, S, A, X, shft+S, I, L, U, J, G, H, Z, Y
 
 Beta:
@@ -76,6 +89,12 @@ Beta:
 [X] 1.4.0 - "Soul Window"				12-15, Upgrade pygame panel to act as timeline control
 [X] 1.5.0 -	"Ultimate Porpoise"			10, 11, 25, 26, 27, render video overhaul
 [X] 1.6.0 - "State of the Union"		16, 17, 18, 19, 20, state_ctrl overhaul
+[X]	1.6.2 - 							bug fixes, general tidying of functions
+[X] 1.7.0 - "Soylent Peen"				28, added composite objects, saving and loading
+[X] 1.7.1 - 							Changing the point of origin of objects
+[X] 1.7.2 - 							Add point of origin state control
+[X] 1.7.3 - 							Repair stacked drawing and transparency issues
+[X] 1.8.0 - 							fix history memory issues
 
 [ ] 2.0.0 - "FuuuuuTuuuuure"			Migrate to modern opengl
 [ ] 2.0.1 - 							Code refactored, commented, and made maintainable
@@ -85,9 +104,7 @@ Beta:
 [ ] 3.0.1 - 							Code refactored, commented, and made maintainable
 """
 
-loc = 374	#code to date 3177
-
-version_name = "Monchy Puppet Theatre Beta 1.6.0"
+version_name = "Monchy Puppet Theatre Beta 1.8.0"
 
 class MainFrame(wx.Frame):
 	def __init__(self, parent, title, size):
@@ -326,8 +343,11 @@ class MainFrame(wx.Frame):
 			self.data = json.loads(tempData.read())
 			tempData.close()
 			self.set_data()
-			self.timelineCtrl.setAudio(self.data["Audio"])
-			self.objCtrl.reload()
+
+			if self.data["Audio"] != "":
+				self.timelineCtrl.setAudio(self.data["Audio"])
+
+			self.objCtrl.reload(True)
 			self.objCtrl.LoadStatus()
 			self.pathname = pathname
 			self.SetTitle(("%s (%s)" % (version_name,  self.pathname.split("\\")[-1].split(".")[0])) )
@@ -338,7 +358,7 @@ class MainFrame(wx.Frame):
 			self.SaveAsData(1)
 		self.new_project(False)
 		self.timelineCtrl.setAudio(self.data["Audio"])
-		self.objCtrl.reload()
+		self.objCtrl.reload(False)
 		self.objCtrl.LoadStatus()
 
 	def ResetHistory(self):
@@ -353,8 +373,17 @@ class MainFrame(wx.Frame):
 		if self.historyIndex < (len(self.editHistory) - 1):
 			print("truncated history")
 			self.editHistory = self.editHistory[:self.historyIndex+1]
-		self.editHistory.append(copy.deepcopy(self.data))
+
+		hist_back = [self.data["Current Object"], []]
+		for frame in self.data["Frames"]:
+			hist_back[1].append(copy.deepcopy(frame[self.data["Current Object"]]))
+
+		self.editHistory.append(hist_back )
+
 		self.historyIndex += 1
+		if len(self.editHistory) > 150:
+			self.editHistory.pop(0)
+			self.historyIndex = (len(self.editHistory) - 1)
 		print(len(self.editHistory))
 		print(self.historyIndex)
 
@@ -364,12 +393,19 @@ class MainFrame(wx.Frame):
 		if self.historyIndex < 0:
 			self.historyIndex = 0
 		else:
-			self.data = copy.deepcopy(self.editHistory[self.historyIndex])
-		print(len(self.editHistory))
-		print(self.historyIndex)
-		self.set_data()
-		self.objCtrl.reload()
-		self.objCtrl.LoadStatus()
+			#self.data = copy.deepcopy(self.editHistory[self.historyIndex])
+
+			for frame in range(len(self.data["Frames"])):
+				self.data["Frames"][frame][ self.editHistory[self.historyIndex][0] ] = copy.deepcopy(self.editHistory[self.historyIndex][1][frame])
+
+			print(len(self.editHistory))
+			print(self.historyIndex)
+			#for key in self.editHistory[self.historyIndex].keys():
+			self.set_data()
+			#	#self.data[key] = copy.deepcopy(self.editHistory[self.historyIndex][key])
+			print("data loaded")
+			self.objCtrl.reload(False)
+			self.objCtrl.LoadStatus()
 
 	def RedoHistory(self, event):
 		print("redoing")
@@ -377,11 +413,16 @@ class MainFrame(wx.Frame):
 		if historyIndex >= len(self.editHistory):
 			self.historyIndex -= 1
 		else:
-			self.data = copy.deepcopy(self.editHistory[self.historyIndex])
+
+			#self.data = copy.deepcopy(self.editHistory[self.historyIndex])
+			for frame in range(len(self.data["Frames"])):
+				self.data["Frames"][frame][ self.editHistory[self.historyIndex][0] ] = copy.deepcopy(self.editHistory[self.historyIndex][1][frame])
+
+
 		print(len(self.editHistory))
 		print(self.historyIndex)
 		self.set_data()
-		self.objCtrl.reload()
+		self.objCtrl.reload(False)
 		self.objCtrl.LoadStatus()
 
 	def new_project(self, startup):
@@ -445,8 +486,10 @@ class MainFrame(wx.Frame):
 				"Unsaved work", wx.OK | wx.CANCEL | wx.ICON_WARNING)
 			if box.ShowModal() == wx.ID_OK:
 				self.SaveData(1)
+		self.timer.Stop()
+		self.timelineCtrl.OnClose()
 		wx.Exit()
-		exit()
+		sys.exit()
 
 if __name__ == '__main__':
 	app = wx.App()

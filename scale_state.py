@@ -4,8 +4,6 @@ import wx
 #other built-in libraries
 import copy
 
-loc = 240
-
 class Scale_State(wx.Panel):
 	def __init__(self, parent, ID, data, window, listener):
 		wx.Panel.__init__(self, parent, ID, style=wx.RAISED_BORDER)

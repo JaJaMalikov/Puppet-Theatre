@@ -4,8 +4,6 @@ import wx
 #other built-in libraries
 import copy
 
-loc = 240
-
 class Pos_State(wx.Panel):
 	def __init__(self, parent, ID, data, window, listener):
 		wx.Panel.__init__(self, parent, ID, style=wx.RAISED_BORDER)
@@ -36,9 +34,9 @@ class Pos_State(wx.Panel):
 		self.pos_z_text = wx.StaticText(self, label="Z", pos=(80, 58))
 
 		#right side
-		self.pos_x_spin = wx.SpinCtrl(self, initial=0, min=-2000, max=2000, pos=(95, 5), size=(52,23))
-		self.pos_y_spin = wx.SpinCtrl(self, initial=0, min=-2000, max=2000, pos=(95, 30), size=(52,23))
-		self.pos_z_spin = wx.SpinCtrl(self, initial=0, min=-100, max=200, pos=(95, 55), size=(52,23))
+		self.pos_x_spin = wx.SpinCtrl(self, initial=0, min=-2000, max=2000, pos=(150, 5), size=(52,23))
+		self.pos_y_spin = wx.SpinCtrl(self, initial=0, min=-2000, max=2000, pos=(150, 30), size=(52,23))
+		self.pos_z_spin = wx.SpinCtrl(self, initial=0, min=-100, max=200, pos=(150, 55), size=(52,23))
 
 		self.pos_keyframe_text = wx.StaticText(self, label="[  ]", pos=(5,85))
 		self.pos_keyframe_button = wx.Button(self, label="Keyframe", pos=(30, 83))
@@ -152,11 +150,11 @@ class Pos_State(wx.Panel):
 
 			init_x = self.data["Frames"][start][self.data["Current Object"]]["Pos"][0]
 			init_y = self.data["Frames"][start][self.data["Current Object"]]["Pos"][1]
-			init_z = self.data["Frames"][start][self.data["Current Object"]]["Dist"]
+			init_z = self.data["Frames"][start][self.data["Current Object"]]["Pos"][2]
 
 			end_x = self.data["Frames"][end][self.data["Current Object"]]["Pos"][0]
 			end_y = self.data["Frames"][end][self.data["Current Object"]]["Pos"][1]
-			end_z = self.data["Frames"][end][self.data["Current Object"]]["Dist"]
+			end_z = self.data["Frames"][end][self.data["Current Object"]]["Pos"][2]
 
 			diff_x = end_x - init_x
 			diff_y = end_y - init_y
@@ -167,22 +165,13 @@ class Pos_State(wx.Panel):
 			step_z = diff_z / total_steps
 
 			for x in range((total_steps)):
-				print(x+start)
 				self.data["Frames"][x + start][self.data["Current Object"]]["Pos"][0] = init_x + (step_x * x)
 
 			for y in range((total_steps)):
 				self.data["Frames"][y + start][self.data["Current Object"]]["Pos"][1] = init_y + (step_y * y)
 
 			for z in range((total_steps)):
-				self.data["Frames"][z + start][self.data["Current Object"]]["Dist"] = init_z + (step_z * z)
-				obj = self.data["Frames"][z + start][self.data["Current Object"]]
-				if self.data["Object List"][self.data["Current Object"]]["Parent"] != None:
-					obj["Pos"][2] = obj["Dist"] + self.data["Frames"][z + start][ obj["Parent"] ]["Dist"]
-				else:
-					obj["Pos"][2] = obj["Dist"]
-					if self.data["Object List"][self.data["Current Object"]]["Children"] != []:
-						for child in self.data["Object List"][self.data["Current Object"]]["Children"]:
-							self.data["Frames"][z + start][ child ]["Pos"][2] = obj["Dist"] + self.data["Frames"][z + start][ child ]["Dist"]
+				self.data["Frames"][z + start][self.data["Current Object"]]["Pos"][2]  = init_z + (step_z * z)
 		self.window.PushHistory()
 
 
@@ -197,14 +186,7 @@ class Pos_State(wx.Panel):
 		obj = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]
 		obj["Pos"][0] = 0.0
 		obj["Pos"][1] = 0.0
-		obj["Dist"] = 0.0
-		if self.data["Object List"][self.data["Current Object"]]["Parent"] != None:
-			obj["Pos"][2] = obj["Dist"] + self.data["Frames"][self.data["Current Frame"]][ self.data["Object List"][self.data["Current Object"]]["Parent"] ]["Dist"]
-		else:
-			obj["Pos"][2] = obj["Dist"]
-			if self.data["Object List"][self.data["Current Object"]]["Children"] != []:
-				for child in self.data["Object List"][self.data["Current Object"]]["Children"]:
-					self.data["Frames"][self.data["Current Frame"]][ child ]["Pos"][2] = obj["Dist"] + self.data["Frames"][self.data["Current Frame"]][ child ]["Dist"]
+		obj["Pos"][2] = 0.0
 		self.changed = True
 
 	def On_pos_x_spin(self, event):
@@ -222,15 +204,7 @@ class Pos_State(wx.Panel):
 		self.changed = True
 
 	def On_pos_z_spin(self, event):
-		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Dist"] = 10-(self.pos_z_spin.GetValue()/2)
-		obj = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]
-		if self.data["Object List"][self.data["Current Object"]]["Parent"] != None:
-			obj["Pos"][2] = obj["Dist"] + self.data["Frames"][self.data["Current Frame"]][ obj["Parent"] ]["Dist"]
-		else:
-			obj["Pos"][2] = obj["Dist"]
-			if self.data["Object List"][self.data["Current Object"]]["Children"] != []:
-				for child in self.data["Object List"][self.data["Current Object"]]["Children"]:
-					self.data["Frames"][self.data["Current Frame"]][ child ]["Pos"][2] = obj["Dist"] + self.data["Frames"][self.data["Current Frame"]][ child ]["Dist"]
+		self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Pos"][2] = 10-(self.pos_z_spin.GetValue()/2)
 		self.changed = True
 
 	def Update(self, second):
@@ -243,7 +217,7 @@ class Pos_State(wx.Panel):
 
 		x_pos = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Pos"][0]
 		y_pos = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Pos"][1]
-		dist = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Dist"]
+		dist = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Pos"][2]
 
 		x_pos += (((dist*-1.0) * .59) + 6.0)
 		y_pos += (((dist*-1.0) * .4) + 4.2)

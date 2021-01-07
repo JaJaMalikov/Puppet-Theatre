@@ -10,13 +10,13 @@ import copy
 #produced by vert_gen using a series of for-loops
 import verts
 
-loc = 127
-
 class OBJ2D:
 	def __init__(self, pathname, window):
 		#sets the default state, copying the verts, coords, and edges from verts
 		#loads the texture from pathname
+		self.window = window
 		self.pathname = pathname
+		self.Image_list = self.window.Image_list
 		self.loaded = False
 		self.verts = copy.deepcopy(verts.verts)
 		self.coords = copy.deepcopy(verts.coords)
@@ -24,6 +24,9 @@ class OBJ2D:
 		self.canvas = window.renderCtrl.canvas
 
 		self.texture = self.load_texture()
+
+		img_num = pathname.count("\\")
+		self.img_tag = pathname.split("\\", img_num-1)[-1]
 
 	def load_texture(self):
 		"""
@@ -58,24 +61,49 @@ class OBJ2D:
 		"""
 		return self.canvas.loadTexture(textureData, self.width, self.height)
 
+	def transform(self, parents, inData):
+		if parents != []:
+			for parent in range(len(parents)):
+				if parent == 0:
+					self.canvas.transform(self.window.data["Frames"][self.window.data["Current Frame"]][parents[parent]], False)
+				else:
+					self.canvas.transform(self.window.data["Frames"][self.window.data["Current Frame"]][parents[parent]], True)
+			self.canvas.transform(inData, True)
+		else:
+			self.canvas.transform(inData, False)
 
-	def draw(self, inData, scale_mod = 1.0, parent = None):
+	def draw(self, inData, scale_mod = 1.0, parent=None, draw_origin=False, parents = []):
 		"""
 		using the fixed function pipeline the current texture is bound and drawn
 		the object data is used for translation, rotation, and scale
 		future plans include an additional transformation step for the parent 
 		before the transformation step for the child
 		"""
-		self.canvas.prepTexture(self.texture)
 
-		if parent != None:
-			self.canvas.transform(parent, False)
-			self.canvas.transform(inData, True)
+		if parent == "Camera":
+			self.canvas.draw_cam(self.texture, self.verts, self.coords)
+
 		else:
-			self.canvas.transform(inData, False)
-		#transformation step
+			drawn = False
+			self.canvas.begin()
 
-		self.canvas.drawTexture(self.verts, self.coords)
+			self.transform(parents, inData)
 
-	def draw_wire(self, inData):
-		self.canvas.draw_wire(inData, self.texture, self.verts, self.edges)
+
+			self.canvas.prepTexture(self.texture)
+			self.canvas.drawTexture(self.verts, self.coords)				
+
+			self.canvas.end()
+
+	def draw_wire(self, inData, parent=None):
+		self.canvas.draw_wire(inData, self.texture, self.verts, self.edges, self.coords)
+
+	def draw_origin(self, inData, parents=None):
+		if parents != []:
+			for parent in range(len(parents)):
+				if parent == 0:
+					self.canvas.transform(self.window.data["Frames"][self.window.data["Current Frame"]][parents[parent]], False)
+				else:
+					self.canvas.transform(self.window.data["Frames"][self.window.data["Current Frame"]][parents[parent]], True)
+
+		self.canvas.draw_origin(inData, self.texture, self.verts, self.edges)

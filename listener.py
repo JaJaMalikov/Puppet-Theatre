@@ -11,7 +11,7 @@ loc = 58
 class Key_listener:
 	#holds current key states
 	def __init__(self):
-		self.keymap = {k: v for v, k in enumerate([False]*512 )}
+		self.keymap = [False]*512#{k: v for v, k in enumerate([False]*512 )}
 		self.keyrel = [False]*512
 		self.struck = [False]*512
 		self.mouse_button = [False]*10

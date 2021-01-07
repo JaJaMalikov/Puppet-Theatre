@@ -35,9 +35,12 @@ class CanvasBase(glcanvas.GLCanvas):
 		#self.data["Background Color"] is a 4 float list of RGBA values
 		#using the * before unpacks it because clear color takes 4 inputs
 		glClearColor(*self.data["Background Color"])
-		glEnable(GL_DEPTH_TEST)
-		glDepthFunc(GL_LEQUAL)
 		self.Bind(wx.EVT_SIZE, self.OnResize)
+		glEnable(GL_BLEND)
+		#glEnable(GL_DEPTH_TEST)
+		#glDepthFunc(GL_LESS)
+		#glAlphaFunc(GL_GREATER, 0.5)
+		#glEnable(GL_ALPHA_TEST)
 
 	def set_distance(self, dist):
 		self.distance = dist
@@ -48,31 +51,10 @@ class CanvasBase(glcanvas.GLCanvas):
 	def set_resolution(self, size):
 		self.resolution = size
 
-	def draw_wire(self, inData, texture, verts, edges ):
-		"""
-		wire drawing for possible debug mode
-		"""
-		glBindTexture(GL_TEXTURE_2D, texture)
-
-		glPushMatrix()
-
-		glTranslatef(inData["Pos"][0], inData["Pos"][1], inData["Pos"][2] )
-		glRotatef(inData["Angle"], 0, 0, 1)
-		glScalef(inData["FlipX"] * inData["ScaleX"], inData["FlipY"] * inData["ScaleY"], 1.0)
-
-		glBegin(GL_LINES)
-
-		for Edge in edges:
-			for Vertex in Edge:
-				glVertex3fv(verts[Vertex])
-
-		glEnd()
-		glPopMatrix()
-
 	def prepTexture(self, texture):
 		glBindTexture(GL_TEXTURE_2D, texture)
 
-		glPushMatrix()
+		self.begin()
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 		glEnable(GL_BLEND)
 
@@ -100,6 +82,92 @@ class CanvasBase(glcanvas.GLCanvas):
 
 		glEnd()
 		glDisable(GL_BLEND)
+		self.end()
+
+	def draw_cam(self, texture, verts, coords):
+		#glDisable(GL_DEPTH_TEST )
+
+		glBindTexture(GL_TEXTURE_2D, texture)
+		glPushMatrix()
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+		self.Purge(self.ViewPortSize)
+
+		glTranslatef(0.0 , -self.box_height ,0.0)
+		glScalef(self.box_width ,self.box_height , 1.0)
+
+
+		glBegin(GL_POLYGON)
+
+		for x in range(len(verts)):
+			glTexCoord2f(*coords[x])
+			glVertex3f(*verts[x])
+
+		glEnd()
+		glDisable(GL_BLEND)
+
+		glColor4f(1.0,1.0,1.0,1.0)
+		glPopMatrix()
+		#glEnable(GL_DEPTH_TEST)
+		#glDepthFunc(GL_LESS)
+		#glAlphaFunc(GL_GREATER, 0.5)
+		#glEnable(GL_ALPHA_TEST)
+
+	def draw_wire(self, inData, texture, verts, edges, coords ):
+		"""
+		wire drawing for possible debug mode
+		"""
+		glBindTexture(GL_TEXTURE_2D, 0)
+		glColor4f(0.0,1.0,0.0,1.0)
+
+		glPushMatrix()
+
+		self.transform(inDate, None)
+
+		#glTranslatef(inData["Pos"][0], inData["Pos"][1], inData["Pos"][2] )
+		#glRotatef(inData["Angle"], 0, 0, 1)
+		#glScalef(inData["FlipX"] * inData["ScaleX"], inData["FlipY"] * inData["ScaleY"], 1.0)
+
+		glBegin(GL_LINES)
+
+		for Edge in edges:
+			for Vertex in Edge:
+				glVertex3fv(verts[Vertex])
+
+		glEnd()
+		glPopMatrix()
+		glColor4f(1.0,1.0,1.0,1.0)
+
+	def draw_origin(self, inData, texture, verts, edges ):
+		"""
+		wire drawing for possible debug mode
+		"""
+		glBindTexture(GL_TEXTURE_2D, 0)
+		glColor4f(0.0,1.0,0.0,1.0)
+
+		glPushMatrix()
+
+		glTranslatef(inData["Pos"][0], inData["Pos"][1], inData["Pos"][2] )
+		glRotatef(inData["Angle"], 0, 0, 1)
+		glScalef(inData["FlipX"] * inData["ScaleX"], inData["FlipY"] * inData["ScaleY"], 1.0)
+
+		glBegin(GL_LINES)
+
+		glVertex3f(0.1 , 0.1, 0.1)
+		glVertex3f(-0.1 , -0.1, 0.1)
+
+		glVertex3f(0.1 , -0.1, 0.1)
+		glVertex3f(-0.1 , 0.1, 0.1)
+
+		glEnd()
+		glPopMatrix()
+		glColor4f(1.0,1.0,1.0,1.0)
+
+
+	def begin(self):
+		glPushMatrix()
+
+	def end(self):
 		glPopMatrix()
 
 	def GetImgData(self, offset):
@@ -111,23 +179,74 @@ class CanvasBase(glcanvas.GLCanvas):
 	def FrameBufferOff(self):
 		glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
-	def transform(self, cam, child):
+	def translate(self, x, y, z):
+		glTranslatef(x,y,z)
+
+	def transformFlat(self, cam, child):
 		#sets the canvas to the camera on the current frame's pos, scale, rot
 		#giving the user full control over the camera from frame to frame
-		if child:
-			glTranslatef(cam["Pos"][0],
-						cam["Pos"][1],
-						0.0)
-		else:
+
+		glTranslatef(cam["Pos"][0],
+					cam["Pos"][1],
+					0.0 )
+
+		glRotatef(cam["Angle"], 0, 0, 1)
+
+		glTranslatef(cam["Origin"][0],
+					cam["Origin"][1],
+					0.0)
+
+		glScalef(cam["FlipX"] * cam["ScaleX"],
+				cam["FlipY"] * cam["ScaleY"], 1.0)
+
+	def transform(self, cam, parent =False):
+		#sets the canvas to the camera on the current frame's pos, scale, rot
+		#giving the user full control over the camera from frame to frame
+
+		if not parent:
 			glTranslatef(cam["Pos"][0],
 						cam["Pos"][1],
 						cam["Pos"][2])
 
+			glRotatef(cam["Angle"], 0, 0, 1)
+
+			glTranslatef(cam["Origin"][0],
+						cam["Origin"][1],
+						0.0)
+
+			glScalef(cam["FlipX"] * cam["ScaleX"],
+					cam["FlipY"] * cam["ScaleY"], 1.0)
+		else:
+			glTranslatef(cam["Pos"][0],
+						cam["Pos"][1],
+						0.0)
+
+			glRotatef(cam["Angle"], 0, 0, 1)
+
+			glTranslatef(cam["Origin"][0],
+						cam["Origin"][1],
+						0.0)
+
+			glScalef(cam["FlipX"] * cam["ScaleX"],
+					cam["FlipY"] * cam["ScaleY"], 1.0)
+
+	def transformStraight(self, cam, child):
+		#sets the canvas to the camera on the current frame's pos, scale, rot
+		#giving the user full control over the camera from frame to frame
+
+		glTranslatef(cam["Pos"][0],
+					cam["Pos"][1],
+					cam["Pos"][2])
+
 		glRotatef(cam["Angle"], 0, 0, 1)
+
 		glScalef(cam["FlipX"] * cam["ScaleX"],
 				cam["FlipY"] * cam["ScaleY"], 1.0)
 
 	def draw_box(self):
+		#print(self.box_width, self.box_height)
+		#glDisable(GL_DEPTH_TEST )
+
 		glBindTexture(GL_TEXTURE_2D, 0)
 		glPushMatrix()
 		glLineWidth(4)
@@ -166,6 +285,10 @@ class CanvasBase(glcanvas.GLCanvas):
 
 		glColor4f(1.0,1.0,1.0,1.0)
 		glPopMatrix()
+		#glEnable(GL_DEPTH_TEST)
+		#glDepthFunc(GL_LESS)
+		#glAlphaFunc(GL_GREATER, 0.5)
+		#glEnable(GL_ALPHA_TEST)
 
 	def gen_fbo(self, px_width, px_height):
 		plane_texture = glGenTextures(1)
@@ -182,6 +305,18 @@ class CanvasBase(glcanvas.GLCanvas):
 		self.FBO = glGenFramebuffers(1)
 		glBindFramebuffer(GL_FRAMEBUFFER, self.FBO)
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, plane_texture, 0)
+
+		plane_buffer = glGenRenderbuffers(1)
+		glBindRenderbuffer(GL_RENDERBUFFER, plane_buffer)
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, px_width, px_height)
+		glBindRenderbuffer(GL_RENDERBUFFER, 0)
+
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, plane_buffer)
+
+		#glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, px_width, px_height, 0,GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, None)
+		#glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, plane_texture, 0)
+
+
 		glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
 	def is_resized(self):
@@ -202,6 +337,8 @@ class CanvasBase(glcanvas.GLCanvas):
 		glLoadIdentity()
 		gluPerspective(self.view_angle, (size[0]/ size[1]), 0.1, self.distance)
 		glTranslatef(0.0,0.0,-10)
+		#glEnable(GL_DEPTH_TEST)
+		#glDepthFunc(GL_LEQUAL)
 
 	def clear(self):
 		#clears the canvas with the color set in self.data["Background Color"]

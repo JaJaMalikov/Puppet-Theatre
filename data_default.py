@@ -41,6 +41,7 @@ data["Current Object"] = "Camera"
 data["Render Dir"] = ""
 data["Video Name"] = ""
 data["Image List"] = []
+data["Parents"] = []
 data["FPS"] = 24
 data["Audio"] = ""
 data["Frames"] = []
@@ -50,8 +51,9 @@ data["Frames"].append(
 			"Current Image": "Camera",
 			"Pos":[0.0,0.0,0.0],
 			"Dist":0.0,
-			"ScaleX":1,
-			"ScaleY":1,
+			"Origin":[0.0,0.0],
+			"ScaleX":1.0,
+			"ScaleY":1.0,
 			"Angle":0,
 			"FlipX":1.0,
 			"FlipY":1.0,
@@ -66,8 +68,9 @@ default = {
 	"Current Image": "none",
 	"Pos":[0.0,0.0,0.0],
 	"Dist":0.0,
-	"ScaleX":1,
-	"ScaleY":1,
+	"Origin":[0.0,0.0],
+	"ScaleX":1.0,
+	"ScaleY":1.0,
 	"Angle":0,
 	"FlipX":1.0,
 	"FlipY":1.0,

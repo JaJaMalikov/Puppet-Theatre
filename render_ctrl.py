@@ -16,10 +16,6 @@ from render_video_dialog import RenderVideoDialog
 import data_default
 from listener import Key_listener
 
-loc = 704
-
-version_name = "Monchy PT Render Control Panel Beta 1.5.0"
-
 class RenderCtrl(wx.Panel):
 	"""
 	Creates an opengl context and renders all the images
@@ -40,13 +36,16 @@ class RenderCtrl(wx.Panel):
 		self.left_mouse_click = False
 		self.middle_mouse_click = False
 		self.right_mouse_click = False
+		self.changed = False
+		self.draw_origin = False
 
 		self.resolutions = {
-			"1080p":[1920,1080], 
-			"720p":[1280,720], 
-			"VGA":[640,480], 
-			"4K":[4096,2160], 
-			"8K":[8192,4320]}
+			"8K":[8192,4320],
+			"4K":[4096,2160],
+			"1080p":[1920,1080],
+			"720p":[1280,720],
+			"VGA":[640,480],
+			}
 
 		#builds the panel and sets layout, binds functions to actions
 		self.build()
@@ -141,13 +140,11 @@ class RenderCtrl(wx.Panel):
 
 	def OnKeyDown(self, event):
 		self.prev_frame = self.data["Current Frame"]
-		print(event.GetKeyCode())
 		self.listener.set_keydown(event.GetKeyCode())
 		event.Skip()
 
 	def OnKeyUp(self, event):
 		self.prev_frame = self.data["Current Frame"]
-		print(event.GetKeyCode())
 		self.listener.set_keyup(event.GetKeyCode())
 		event.Skip()
 
@@ -239,15 +236,15 @@ class RenderCtrl(wx.Panel):
 		#up is further away
 		#divides the wheel rotation by 200 to get a small float value to alter the z axis by
 		obj = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]
-		obj["Dist"] -= event.GetWheelRotation()/2000
-		if self.data["Object List"][self.data["Current Object"]]["Parent"] != None:
-			obj["Pos"][2] = obj["Dist"] + self.data["Frames"][self.data["Current Frame"]][ self.data["Object List"][self.data["Current Object"]]["Parent"] ]["Dist"]
-		else:
-			obj["Pos"][2] = obj["Dist"]
-			if self.data["Object List"][self.data["Current Object"]]["Children"] != []:
-				for child in self.data["Object List"][self.data["Current Object"]]["Children"]:
-					self.data["Frames"][self.data["Current Frame"]][ child ]["Pos"][2] = obj["Dist"] + self.data["Frames"][self.data["Current Frame"]][ child ]["Dist"]
-		self.window.PushHistory()
+		obj["Pos"][2] -= event.GetWheelRotation()/2000
+		#if self.data["Object List"][self.data["Current Object"]]["Parent"] != None:
+		#	obj["Pos"][2] = obj["Dist"] + self.data["Frames"][self.data["Current Frame"]][ self.data["Object List"][self.data["Current Object"]]["Parent"] ]["Dist"]
+		#else:
+		#	obj["Pos"][2] = obj["Dist"]
+		#	if self.data["Object List"][self.data["Current Object"]]["Children"] != []:
+		#		for child in self.data["Object List"][self.data["Current Object"]]["Children"]:
+		#			self.data["Frames"][self.data["Current Frame"]][ child ]["Pos"][2] = obj["Dist"] + self.data["Frames"][self.data["Current Frame"]][ child ]["Dist"]
+		self.changed = True
 
 	def set_data(self, data):
 		#resets all data within the control panel in order to eitehr load a project
@@ -258,6 +255,7 @@ class RenderCtrl(wx.Panel):
 		self.r_slider.SetValue(self.data["Background Color"][0]*100)
 		self.g_slider.SetValue(self.data["Background Color"][1]*100)
 		self.b_slider.SetValue(self.data["Background Color"][2]*100)
+		print("data set")
 
 	def OnMouseDown(self, event):
 		self.prev_frame = self.data["Current Frame"]
@@ -283,6 +281,9 @@ class RenderCtrl(wx.Panel):
 
 		self.origin_pos = (new_x_pos, new_y_pos)
 		self.first_pos = event.GetPosition()
+		self.origin_rot = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Angle"]
+		self.origin_scale_x = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["ScaleX"]
+		self.origin_scale_y = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["ScaleY"]
 
 		self.canvas.CaptureMouse()
 
@@ -295,7 +296,7 @@ class RenderCtrl(wx.Panel):
 
 	def OnMouseMotion(self, event):
 		#when mouse is moved triggers this event
-		if event.Dragging() and event.LeftIsDown():
+		if event.LeftIsDown() and self.listener.get_key(79):
 			"""
 			if mouse is dragged while left mouse button is down
 			calculates the new position of the mouse and compares it to the origin from the mouse click
@@ -304,6 +305,31 @@ class RenderCtrl(wx.Panel):
 				at different distances
 			resets origin position in order to avoid a cumulative effect
 			"""
+
+			pos = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Origin"]
+			dist = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Dist"]
+
+			width = ((dist*-1.0) * .59) + 6.0
+			height = ((dist*-1.0) * .4) + 4.2
+
+			new_x_pos = ((width*2) * (event.GetPosition()[0]/self.width)) - width
+			new_y_pos = (((height*2)) * (1.0-(event.GetPosition()[1]/self.height)) - height)- (self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["ScaleY"])
+
+			pos[0] += new_x_pos - self.origin_pos[0]
+			pos[1] += new_y_pos - self.origin_pos[1]
+
+			self.origin_pos = (new_x_pos, new_y_pos)
+
+		elif event.LeftIsDown():
+			"""
+			if mouse is dragged while left mouse button is down
+			calculates the new position of the mouse and compares it to the origin from the mouse click
+			add difference to the x,y position accordingly in order to get a "click and drag" effect
+			by checking the posision of the mouse click according to the Z axix it avoids a parralax effect
+				at different distances
+			resets origin position in order to avoid a cumulative effect
+			"""
+
 
 			pos = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Pos"]
 			dist = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Dist"]
@@ -319,7 +345,7 @@ class RenderCtrl(wx.Panel):
 
 			self.origin_pos = (new_x_pos, new_y_pos)
 
-		elif event.Dragging() and event.RightIsDown():
+		elif event.RightIsDown():
 			"""
 			if dragging and right mouse button is down alters the angle based on mouse posistion
 			only checks for position in pixels on screen and treats it as a percentage of the whole screen
@@ -328,10 +354,11 @@ class RenderCtrl(wx.Panel):
 
 			"""
 			percent = ((event.GetPosition()[0] - self.first_pos[0])/self.width)
-			mouse_pos = int(percent * (360*2)*-1)
-			self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Angle"] = mouse_pos
+			mouse_pos = int(percent * (360)*-1)
+			cur_angle = self.origin_rot + mouse_pos
+			self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Angle"] = cur_angle
 
-		elif event.Dragging() and event.MiddleIsDown():
+		elif event.MiddleIsDown():
 			"""
 			if dragging and middle click (mouse wheel click) then alters the scale by the relative position
 			of the mouse on the screen, if current object's aspect ratio is clicked then maintains aspect ratio
@@ -339,13 +366,16 @@ class RenderCtrl(wx.Panel):
 			"""
 			percent = ((event.GetPosition()[0] - self.first_pos[0])/self.width)
 			mouse_pos = int(percent * (360*2)*-1)
-			self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["ScaleX"] = -(mouse_pos/10)
+			cur_x_scale = self.origin_scale_x + -(mouse_pos/10)
+
+			self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["ScaleX"] = cur_x_scale
 			if self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Aspect"]:
-				self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["ScaleY"] = -(mouse_pos/10)
+				self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["ScaleY"] = cur_x_scale
 			else:
 				percent = ((event.GetPosition()[1] - self.first_pos[1])/self.height)
 				mouse_pos = int(percent * (360*2)*-1)
-				self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["ScaleY"] = (mouse_pos/10)
+				cur_y_scale = self.origin_scale_y + (mouse_pos/10)
+				self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["ScaleY"] = cur_y_scale
 
 		else:
 			pass
@@ -365,10 +395,16 @@ class RenderCtrl(wx.Panel):
 		#purge loads the identity and resets the perspective of the camera
 		#canvas is then reset to the camera
 		#finally everything is drawn
+		if self.changed and second:
+			self.window.PushHistory()
+			self.changed = False
+
 		if self.listener.get_struck(68): #on D
 			self.window.timelineCtrl.onNext(1)
 		if self.listener.get_struck(65): #on A
 			self.window.timelineCtrl.onBack(1)
+
+		self.draw_origin = self.listener.get_key(79)
 
 		if self.listener.get_struck(32):
 			if self.window.timelineCtrl.isPlaying():
@@ -383,7 +419,6 @@ class RenderCtrl(wx.Panel):
 
 		if self.left_mouse_click:
 			if self.prev_frame != self.data["Current Frame"]:
-				print("change")
 				self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Pos"] = copy.deepcopy(self.data["Frames"][self.prev_frame ][self.data["Current Object"]]["Pos"])
 				self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["Dist"] = copy.deepcopy(self.data["Frames"][self.prev_frame ][self.data["Current Object"]]["Dist"])
 				self.prev_frame = self.data["Current Frame"]
@@ -403,10 +438,12 @@ class RenderCtrl(wx.Panel):
 
 
 		self.window.Set_Fifth_Status( str(self.data["Current Frame"]))
-		self.canvas.clear()
-		self.canvas.Purge(self.canvas.ViewPortSize)
-		self.canvas.transform(self.data["Frames"][self.data["Current Frame"]]["Camera"], False)
-		self.Draw()
+
+		if not self.window.rendering:
+			self.canvas.clear()
+			self.canvas.Purge(self.canvas.ViewPortSize)
+			self.canvas.transform(self.data["Frames"][self.data["Current Frame"]]["Camera"], False)
+			self.Draw()
 
 	def resize_viewbox(self):
 		#canvas resize event is handled to ensure the FBO for HD rendering is constantly up-to-date
@@ -439,43 +476,52 @@ class RenderCtrl(wx.Panel):
 
 		self.canvas.gen_fbo(self.px_width, self.px_height)
 
+	def gen_draw_order(self, obj_list, parent_list = [] ):
+		parents = set(obj_list)
+		dict_with_only_keys = {k: v for k, v in self.data["Frames"][self.data["Current Frame"]].items() if k in parents}
+		#draw_order = sorted(dict_with_only_keys , key = lambda x: dict_with_only_keys[x]["Pos"][2])
+
+		final_list = {}
+
+		for obj in dict_with_only_keys.keys():
+			final_list[obj] = [copy.deepcopy(parent_list) , dict_with_only_keys[obj]["Pos"][2]]
+			children_list = self.window.data["Object List"][obj ]["Children"]
+			cur_list = self.gen_draw_order(children_list, parent_list + [obj])
+
+			for key in cur_list.keys():
+				cur_list[key][1] += final_list[obj][1]
+
+			final_list.update(cur_list)
+
+		return final_list
+
 
 	def Draw(self):
-		#draw all objects here
-		#a draw order list is generated by sorting using a lambda by the distance
-		#returned list is composed of ints who's value is the object's position in the current frame object list
 
-		#print(list(self.data["Object List"].keys()))
+		parents = set(self.data["Parents"])
 
-		draw_order = sorted(self.data["Frames"][self.data["Current Frame"]], key = lambda x: self.data["Frames"][self.data["Current Frame"]][x]["Pos"][2])
+		imglist = self.gen_draw_order(parents)
 
-		#objects are drawn using the draw order, camera is ignored
-		#as is any object what's current image is "none"
-		#for the beta 1 the parent object will be determined by checking for
-		#an object name in the obj["Parent"] string, if string = "" then no parent is used
-		#if parent is present then the object's status is rendered first, giving the new object a relative status
-		"""
-		proposed future update:"""
-		for obj in draw_order:
-			if obj != "Camera":
-				cur_obj = self.data["Frames"][self.data["Current Frame"]][obj]
-				if cur_obj["Current Image"] not in ["", "none"]:
-					if self.data["Object List"][obj]["Parent"] != None:
-						parent = self.data["Frames"][self.data["Current Frame"]][self.data["Object List"][obj]["Parent"]]
-					else:
-						parent = None
-					self.Image_list[cur_obj["Current Image"]].draw(cur_obj, parent=parent)
-		"""
-		This method will be replaced in B2 when modern opengl is used instead
-		
+		draw_order = sorted(imglist , key = lambda x: imglist[x][1])
 
 		for obj in draw_order:
 			if obj != "Camera":
 				cur_obj = self.data["Frames"][self.data["Current Frame"]][obj]
 				if cur_obj["Current Image"] not in ["", "none"]:
-					self.Image_list[cur_obj["Current Image"]].draw(
-						cur_obj #all data related to object stats
-						)"""
+					self.Image_list[cur_obj["Current Image"]].draw(cur_obj, parent=obj, draw_origin=self.draw_origin, parents=imglist[obj][0])
+
+
+		cur_obj = self.data["Frames"][self.data["Current Frame"]]["Camera"]
+		obj = "Camera"
+
+		if cur_obj["Current Image"] != "Camera":
+			self.Image_list[ cur_obj["Current Image"]].draw(cur_obj, parent=obj, draw_origin=self.draw_origin)
+
+		if self.draw_origin:
+			thisobj = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]
+			#self.Image_list[ thisobj["Current Image"] ].transform(imglist[self.data["Current Object"]][0], thisobj)
+			self.Image_list[ thisobj["Current Image"] ].draw_origin(thisobj, imglist[self.data["Current Object"]][0])
+
 
 		#resets convas viewbox upon resize to ensure continuity
 		if self.canvas.is_resized():
@@ -493,274 +539,3 @@ class RenderCtrl(wx.Panel):
 		#this should probably do something
 		pass
 
-class testFrame(wx.Frame):
-	def __init__(self, parent, title, size):
-		wx.Frame.__init__(self,
-			parent, wx.ID_ANY, title, pos=(1,1), size=size,
-			style = (wx.DEFAULT_FRAME_STYLE|wx.WANTS_CHARS))
-
-		self.listener = Key_listener()
-
-		#sets all data to default position for a new project
-		self.new_project()
-
-		#setting up layout
-		self.mainBox = wx.BoxSizer(wx.HORIZONTAL)
-
-		#add elements and panels here to allow them to make changes to the window
-		self.renderCtrl = RenderCtrl(self, wx.ID_ANY, self.data, self, (1000,700), self.Image_list, self.listener)
-
-		#creates menus and tells all control panels to set their menus as well
-		self.create_menus()
-
-		self.set_layout()
-
-		self.timer = wx.Timer(self)
-
-		#sets the time the last tick took place
-		#tickspeed is useful in determining if the program is running at full speed
-		self.lasttick = datetime.now().second
-
-		#####################statusbar
-		self.statusbar = self.CreateStatusBar(5)
-		
-		#####################bindings
-		self.bind_all()
-		self.timer.Start()
-		self.Maximize(True)
-
-	def set_layout(self):
-		#organizes layout
-		"""
-		===================
-		| |             | |
-		|1|     2       |3|
-		| |_____________| |
-		|_|______4______|_|
-
-		1- objCtrl
-		2- renderCtrl
-		3- stateCtrl
-		4- timelineCtrl
-
-		"""
-		self.center = wx.BoxSizer(wx.VERTICAL)
-		self.center.Add(wx.Panel(self, size=(2000,1)))
-		self.center.Add(self.renderCtrl, 1, wx.EXPAND)   #2
-
-		self.mainBox.Add(self.center, 1, wx.EXPAND)      #2, 4
-
-		self.SetSizer(self.mainBox)
-
-	def bind_all(self):
-		self.Bind(wx.EVT_TIMER, self.tickrate, self.timer)
-		self.Bind(wx.EVT_CLOSE, self.OnClose)
-		self.Bind(wx.EVT_MENU, self.OnNew, self.newProj)
-		self.Bind(wx.EVT_MENU, self.OnClose, self.closeWin)
-		self.Bind(wx.EVT_MENU, self.LoadData, self.loadData)
-		self.Bind(wx.EVT_MENU, self.SaveData, self.saveData)
-		self.Bind(wx.EVT_MENU, self.SaveAsData, self.saveAsData)
-
-		self.Bind(wx.EVT_MENU, self.On_tutorial1, self.tutorial1)
-		self.Bind(wx.EVT_MENU, self.On_tutorial2, self.tutorial2)
-		self.Bind(wx.EVT_MENU, self.On_tutorial3, self.tutorial3)
-		self.Bind(wx.EVT_MENU, self.On_tutorial4, self.tutorial4)
-		self.Bind(wx.EVT_MENU, self.On_tutorial5, self.tutorial5)
-		self.Bind(wx.EVT_MENU, self.On_tutorial6, self.tutorial6)
-
-	def create_menus(self):
-		self.menubar = wx.MenuBar()
-		self.fileMenu = wx.Menu()
-
-		#creates the menu items for saving/loading the current project
-		self.newProj = wx.MenuItem(self.fileMenu, wx.ID_ANY, "&New Project\tCtrl+N", 'New Project')
-		self.loadData = wx.MenuItem(self.fileMenu, wx.ID_ANY, '&Load Project\tCtrl+O', 'Load Animation')
-		self.saveData = wx.MenuItem(self.fileMenu, wx.ID_ANY, '&Save Project\tCtrl+S', 'Save Animation')
-		self.saveAsData = wx.MenuItem(self.fileMenu, wx.ID_ANY, '&Save Project As\tShift+Ctrl+S', 'Save Animation As')
-
-		self.fileMenu.Append(self.newProj)
-		self.fileMenu.Append(self.loadData)
-		self.fileMenu.Append(self.saveData)
-		self.fileMenu.Append(self.saveAsData)
-		self.fileMenu.AppendSeparator()
-
-		self.closeWin = wx.MenuItem(self.fileMenu, wx.ID_EXIT, '&Quit\tCtrl+X', 'Quit Application')
-
-		self.fileMenu.AppendSeparator()
-
-		self.fileMenu.Append(self.closeWin)
-
-		self.menubar.Append(self.fileMenu, '&File')
-
-		#creates each control panel's menus in order
-		#the order these are called determines how the menus are laid out
-		self.renderCtrl.create_menus()
-
-		#help menu links back to youtube tutorials on how to use the program
-		self.helpMenu = wx.Menu()
-
-		self.tutorial1 = wx.MenuItem(self.helpMenu, wx.ID_ANY, "&About All")
-		self.tutorial2 = wx.MenuItem(self.helpMenu, wx.ID_ANY, "&About Objects")
-		self.tutorial3 = wx.MenuItem(self.helpMenu, wx.ID_ANY, "&About Timeline")
-		self.tutorial4 = wx.MenuItem(self.helpMenu, wx.ID_ANY, "&About Renderer")
-		self.tutorial5 = wx.MenuItem(self.helpMenu, wx.ID_ANY, "&About States")
-		self.tutorial6 = wx.MenuItem(self.helpMenu, wx.ID_ANY, "&About Creating Video")
-
-		self.helpMenu.Append(self.tutorial1)
-		self.helpMenu.Append(self.tutorial2)
-		self.helpMenu.Append(self.tutorial3)
-		self.helpMenu.Append(self.tutorial4)
-		self.helpMenu.Append(self.tutorial5)
-		self.helpMenu.Append(self.tutorial6)
-
-		self.menubar.Append(self.helpMenu, "&Help")
-
-		self.SetMenuBar(self.menubar)
-
-
-		#opens to a playlist on youtube containing the tutorials for use
-		#could probably be turned into a single function
-	def On_tutorial1(self, event):
-		webbrowser.open("https://www.youtube.com/watch?v=oBAQy1D5r7o&list=PLkVdGBkhsW-WdYoTn-Uf8SouWUh3vGnGO&index=1")
-
-	def On_tutorial2(self, event):
-		webbrowser.open("https://www.youtube.com/watch?v=5L98weJKd48&list=PLkVdGBkhsW-WdYoTn-Uf8SouWUh3vGnGO&index=2")
-
-	def On_tutorial3(self, event):
-		webbrowser.open("https://www.youtube.com/watch?v=Sm7fqqMC0Ks&list=PLkVdGBkhsW-WdYoTn-Uf8SouWUh3vGnGO&index=3")
-
-	def On_tutorial4(self, event):
-		webbrowser.open("https://www.youtube.com/watch?v=ar9PjawB-qs&list=PLkVdGBkhsW-WdYoTn-Uf8SouWUh3vGnGO&index=4")
-
-	def On_tutorial5(self, event):
-		webbrowser.open("https://www.youtube.com/watch?v=rqVycueA8Tg&list=PLkVdGBkhsW-WdYoTn-Uf8SouWUh3vGnGO&index=5")
-
-	def On_tutorial6(self, event):
-		webbrowser.open("https://www.youtube.com/watch?v=15ymfD67Qbk&list=PLkVdGBkhsW-WdYoTn-Uf8SouWUh3vGnGO&index=6")
-
-	def tickrate(self, event):
-		"""
-		monitors the tickrate of the software
-		allows it to run at max speed, capped by the vsync rate
-		every second it sets the current tickrate to monitor the proccessing speed of the program
-		sends True signal to the control panels update function once per second
-		current time is time since Jan 1, 1970
-		"""
-		current_time = (datetime.now()-datetime(1970,1,1)).total_seconds()
-		if (current_time - self.lasttick) >= 1:
-			self.Set_Third_Status(str(self.ticks) )
-			self.lasttick = current_time
-			self.ticks = 0
-			self.renderCtrl.Update(True)
-		else:
-			self.ticks += 1
-			self.renderCtrl.Update(False)
-
-		#statusbar set functions, to be compressed into single function "Set_Status"
-	def Set_First_Status(self, text):
-		self.Set_Status(0, text)
-
-	def Set_Second_Status(self, text):
-		self.Set_Status(1, text)
-
-	def Set_Third_Status(self, text):
-		self.Set_Status(2, text)
-
-	def Set_Forth_Status(self, text):
-		self.Set_Status(3, text)
-
-	def Set_Fifth_Status(self, text):
-		self.Set_Status(4, text)
-
-	def Set_Status(self, bar, text):
-		self.statusbar.SetStatusText( text, bar)
-
-	def LoadData(self, event):
-		"""
-		self.data is loaded from a json file named *.ani (short for animate)
-		load data selects a file with a file dialog and loads it as self.data
-		then it calls self.set_data(), which loads all the images, audio, and settings from the file
-		title of the animation is added to the window title
-
-		OnNew offers to save the current project if anything has been added
-		after it calls new_project to wipe everything clean
-		"""
-		with wx.FileDialog(self, "Load Animation", wildcard="ANI files (*.ani)|*.ani",
-							style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
-			if fileDialog.ShowModal() == wx.ID_CANCEL:
-				return
-
-			pathname = fileDialog.GetPath()
-			tempData = open(pathname, "r")
-			self.data = json.loads(tempData.read())
-			tempData.close()
-			self.set_data()
-			self.pathname = pathname
-			self.SetTitle("%s (%s)".format(version_name,  self.pathname.split("\\")[-1].split(".")[0]))
-
-	def OnNew(self):
-		if len(self.data["Object List"]) > 1 or self.data["Audio"] != "":
-			self.SaveAsData(1)
-		self.new_project()
-
-	def new_project(self):
-		#sets the animation state data into default, for more details see data_default.py
-		self.data = copy.deepcopy(data_default.data)
-
-		#dict, holds all images as opengl textures "image name":obj2d
-		self.Image_list = {}
-		#holds current file path to save and load the animation
-		self.pathname = ""
-		#signals to certain functions that the video is being rendered to disable audio syncing
-		self.rendering = False
-		self.ticks = 0
-		#clears the project name
-		self.SetTitle(version_name)
-		try:
-			self.set_data()
-		except:
-			pass
-
-	def set_data(self):
-		#calls every control panel to load the new data
-		self.renderCtrl.set_data(self.data)
-
-	def SaveAsData(self, event):
-		with wx.FileDialog(self, "Save animation", wildcard="ANI files (*.ani)|*.ani",
-			style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
-
-			if fileDialog.ShowModal() == wx.ID_CANCEL:
-				return
-
-			pathname = fileDialog.GetPath()
-			self.writeData(pathname)
-
-	def SaveData(self, event):
-		if self.pathname != "":
-			self.writeData(self.pathname)			
-		else:
-			self.SaveAsData(event)
-
-	def writeData(self, pathname):
-		try:
-			with open(pathname, 'w') as file:
-				file.write(json.dumps(self.data))
-		except IOError:
-			wx.LogError("Cannot save current data in file %s" % pathname)
-		self.pathname = pathname
-		self.SetTitle("%s (%s)".format(version_name,  self.pathname.split("\\")[-1].split(".")[0]))
-
-	def OnClose(self, event):
-		wx.Exit()
-		exit()
-
-
-if __name__ == '__main__':
-	import pygame
-	w,h = 10,10
-	screen = pygame.display.set_mode((w,h))
-
-	app = wx.App()
-	view = testFrame(parent=None, title='Finger Pupper Theatre', size=(1500,700))
-	view.Show()
-	app.MainLoop()

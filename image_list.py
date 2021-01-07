@@ -109,8 +109,8 @@ class ImageList(wx.Panel ):
 		self.overwrite_last = wx.Button(self.overwrite_panel, label="Previous", pos=(0, 44))
 		self.overwrite_next = wx.Button(self.overwrite_panel, label="Next", pos=(85, 44))
 
-		self.overwrite_future = wx.Button(self.overwrite_panel, label="Subsequent", pos=(0,66))
-		self.overwrite_past = wx.Button(self.overwrite_panel, label="Preceeding", pos=(85,66))
+		self.overwrite_future = wx.Button(self.overwrite_panel, label="Subsequent", pos=(85,66))
+		self.overwrite_past = wx.Button(self.overwrite_panel, label="Preceeding", pos=(0,66))
 
 	def OnKeyDown(self, event):
 		print(event.GetKeyCode())
@@ -175,10 +175,11 @@ class ImageList(wx.Panel ):
 	def set_data(self, data):
 		self.data = data
 
-	def reload(self):
+	def reload(self, load_from_file):
 		#reloads all images from self.data
-		for image in self.data["Image List"]:
-			self.AddImg(image, False)
+		if load_from_file:
+			for image in self.data["Image List"]:
+				self.AddImg(image, False)
 		self.set_list(self.data["Current Object"])
 
 	def move_up(self, event):

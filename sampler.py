@@ -4,8 +4,6 @@ import scipy.io.wavfile as wav
 #loads wav file as array of ints which can be normalized and turned into a visual waveform
 #to be restructured later into an object/class for faster resize times
 
-loc = 33
-
 class wavedata:
 	def __init__(self):
 		self.filename = ""

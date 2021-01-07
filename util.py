@@ -1,9 +1,21 @@
 import json
 import sys
+import os
 
 keyword = sys.argv[1]
 
-loc = 96
+def count_file(filename):
+	thing = open(filename, "r")
+	herp = thing.readlines()
+	thing.close()
+	for line in range(len(herp)):
+		herp[line] = herp[line].split("#")[0]
+		herp[line] = herp[line].replace("\t\t", "")
+		herp[line] = herp[line].replace("\n", "")
+
+	strings = [x for x in herp if x]
+
+	return len(strings)
 
 if keyword == "vertgen":
 	#min 1
@@ -63,34 +75,12 @@ if keyword == "vertgen":
 	page.close()
 
 elif keyword == "count":
-	import main
-	import canvas_base
-	import data_default
-	import image_list
-	import listener
-	import OBJ2D
-	import object_ctrl
-	import object_list
-	import pygame_panel
-	import render_ctrl
-	import render_frames_dialog
-	import render_video_dialog
-	import sampler
-	import timeline_ctrl
 
-	loc += main.loc
-	loc += canvas_base.loc
-	loc += data_default.loc
-	loc += image_list.loc
-	loc += listener.loc
-	loc += OBJ2D.loc
-	loc += object_ctrl.loc
-	loc += object_list.loc
-	loc += pygame_panel.loc
-	loc += render_ctrl.loc
-	loc += render_frames_dialog.loc
-	loc += render_video_dialog.loc
-	loc += sampler.loc
-	loc += timeline_ctrl.loc
+	total = 0
+	for filename in os.listdir():
+		if ".py" in filename:
+			total += count_file(filename)
 
-	print(loc)
+	print(total)
+
+

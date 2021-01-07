@@ -7,12 +7,12 @@ import os
 import ffmpeg
 import shutil
 
+import copy
+
 #constants to be used throughout program
 from consts import *
 #canvasbase for rendering video
 from canvas_base import CanvasBase
-
-loc = 87
 
 class RenderVideoDialog(wx.Dialog):
 	def __init__(self, *args, **kw):
@@ -75,6 +75,25 @@ class RenderVideoDialog(wx.Dialog):
 
 	######### frames dialog goes here
 
+	def gen_draw_order(self, obj_list, parent_list = [] ):
+		parents = set(obj_list)
+		dict_with_only_keys = {k: v for k, v in self.data["Frames"][self.data["Current Frame"]].items() if k in parents}
+		#draw_order = sorted(dict_with_only_keys , key = lambda x: dict_with_only_keys[x]["Pos"][2])
+
+		final_list = {}
+
+		for obj in dict_with_only_keys.keys():
+			final_list[obj] = [copy.deepcopy(parent_list) , dict_with_only_keys[obj]["Pos"][2]]
+			children_list = self.window.data["Object List"][obj ]["Children"]
+			cur_list = self.gen_draw_order(children_list, parent_list + [obj])
+
+			for key in cur_list.keys():
+				cur_list[key][1] += final_list[obj][1]
+
+			final_list.update(cur_list)
+
+		return final_list
+
 	def Update(self, event):
 		if self.window.rendering:
 			"""
@@ -82,37 +101,41 @@ class RenderVideoDialog(wx.Dialog):
 			render control panel, differences exist in order to scale it up to the proper size and render to the FBO instead
 			little concern is given to effeciency since the largest bottleneck is how long it takes to save to disk
 			"""
+
 			print("drawing order")
-			draw_order = sorted(self.data["Frames"][self.data["Current Frame"]], key = lambda x: self.data["Frames"][self.data["Current Frame"]][x]["Pos"][2])
+
+			parents = set(self.data["Parents"])
+			imglist = self.gen_draw_order(parents)
+			draw_order = sorted(imglist, key=lambda x: imglist[x][1])
 
 			print("resetting canvas")			
-			self.canvas.FrameBufferOn()
+			self.canvas.clear()
 			self.canvas.Purge([self.px_width, self.px_height] )
 			self.canvas.transform(self.data["Frames"][self.data["Current Frame"]]["Camera"], False)
 			#when parent tranform is added to render this must be updated accordingly
 			print("drawing objects")
+
 			for obj in draw_order:
 				if obj != "Camera":
 					cur_obj = self.data["Frames"][self.data["Current Frame"]][obj]
 					if cur_obj["Current Image"] not in ["", "none"]:
-						self.Image_list[cur_obj["Current Image"]].draw(
-							cur_obj #all data related to object stats
-							)
+						self.Image_list[cur_obj["Current Image"]].draw(cur_obj, parent=obj, draw_origin=False, parents=imglist[obj][0])
 
-			#turns FBO render into a string of pixel data, at the offset + 1080p
-			#converts that into a pygame surface
-			#saves that image to a rendered frame on disk
-			#pygame is used here because in future versions it can be used to smooth the video for reduced pixelation
+			cur_obj = self.data["Frames"][self.data["Current Frame"]]["Camera"]
+			obj = "Camera"
+			if cur_obj["Current Image"] != "Camera":
+				self.Image_list[ cur_obj["Current Image"]].draw(cur_obj, parent=obj, draw_origin=False )
+
 			print("getting image")
 			imgdata = self.canvas.GetImgData([self.xoffset, self.yoffset])
 			fin_surf = pygame.image.fromstring(imgdata, (self.canvas.resolution[0], self.canvas.resolution[1]), "RGBA", True)
 			pygame.image.save(fin_surf, self.data["Render Dir"] + "\\Frames\\{0:06}.png".format(self.data["Current Frame"]))
 			print("turning off frame buffer")
-			self.canvas.FrameBufferOff()
 			
 			self.data["Current Frame"] += 1
 			self.frames_progress.SetValue(self.data["Current Frame"])
 		if self.window.rendering and self.data["Current Frame"] >= len(self.data["Frames"]):
+			self.canvas.FrameBufferOff()
 			self.Resize()
 			self.RenderVideo()
 
@@ -137,6 +160,7 @@ class RenderVideoDialog(wx.Dialog):
 		os.mkdir( self.data["Render Dir"] + "\\Frames")
 		print("setting label")
 		self.frames_render_status.SetLabel("Rendering...")
+		self.canvas.FrameBufferOn()
 
 	######### end frames dialog
 
@@ -157,10 +181,11 @@ class RenderVideoDialog(wx.Dialog):
 				.input(self.data["Render Dir"] + "/Frames/%06d.png", framerate=self.data["FPS"])
 				.output(self.data["Video Name"])
 				.global_args("-i", self.data["Audio"], 
-					"-vcodec", "libx264", 
-					"-crf", "18", 
-					"-pix_fmt", "yuv420p", 
-					"-brand","mp42",
+					"-f", "image2",
+					"-s", "%dx%d" % (self.canvas.resolution[0], self.canvas.resolution[1]),
+					"-vcodec", "libx264",
+					"-crf", "25",
+					"-pix_fmt", "yuv420p",
 					)
 				.run()
 			)
@@ -170,12 +195,12 @@ class RenderVideoDialog(wx.Dialog):
 				ffmpeg
 				.input(self.data["Render Dir"] + "/Frames/%06d.png", framerate=self.data["FPS"])
 				.output(self.data["Video Name"])
-				.global_args( 
-					"-vcodec", "libx264", 
-					"-crf", "18", 
-					"-pix_fmt", "yuv420p", 
-					"-brand","mp42",
-					)
+				.global_args(
+					"-f", "image2",
+					"-s", "%dx%d" % (self.canvas.resolution[0], self.canvas.resolution[1]),
+					"-vcodec", "libx264",
+					"-crf", "25",
+					"-pix_fmt", "yuv420p")
 				.run()
 			)
 		self.video_render_status.SetLabel("Video rendered! <3")

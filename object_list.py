@@ -3,6 +3,7 @@ import wx
 
 #Other Build in Libraries
 import copy
+import json
 
 #vertex default values
 import verts
@@ -13,8 +14,6 @@ import data_default
 #container class for 2D object texture
 from OBJ2D import OBJ2D
 
-loc = 110
-
 class ParentMenu(wx.Menu):
 	def __init__(self, parent, data):
 		super(ParentMenu, self).__init__()
@@ -23,19 +22,30 @@ class ParentMenu(wx.Menu):
 		self.data = data
 
 		mmi = wx.MenuItem(self, wx.NewId(), 'Set Parent')
-		self.AppendItem(mmi)
+		self.Append(mmi)
 		self.Bind(wx.EVT_MENU, self.OnMakeParent, mmi)
 
 	def OnMakeParent(self, event):
 		keylist = list(self.data["Object List"].keys())
-		for key in keylist:
-			if self.data["Object List"][key]["Parent"] != None:
-				keylist.remove(key)
+		#for key in keylist:
+		#	if self.data["Object List"][key]["Parent"] != None:
+		#		keylist.remove(key)
 		self.dlg = wx.SingleChoiceDialog(None, "Which", "title", keylist, wx.CHOICEDLG_STYLE)
 		if self.dlg.ShowModal() == wx.ID_OK:
 			objname = self.dlg.GetStringSelection()
-			self.data["Object List"][self.data["Current Object"]]["Parent"] = objname
-			self.data["Object List"][objname]["Children"].append(self.data["Current Object"])
+
+			if objname == self.data["Current Object"]:
+				if objname not in self.data["Parents"]:
+					self.data["Parents"].append(objname)
+					for obj in self.data["Object List"]:
+						if objname in self.data["Object List"][obj]["Children"]:
+							self.data["Object List"][obj]["Children"].remove(objname)
+			else:
+				self.data["Object List"][self.data["Current Object"]]["Parent"] = objname
+				self.data["Object List"][objname]["Children"].append(self.data["Current Object"])
+				self.data["Parents"].remove( self.data["Current Object"])
+
+		print(self.data["Parents"])
 		self.dlg.Destroy()
 
 class ObjectList(wx.Panel):
@@ -50,6 +60,9 @@ class ObjectList(wx.Panel):
 		self.data = data
 		self.window = window
 		self.frame = frame
+		self.Image_list = self.window.Image_list
+
+		self.temp_data = {"Object List":{}, "Image List":[], "frame data":{}}
 
 		self.build()
 		self.set_layout()
@@ -72,10 +85,65 @@ class ObjectList(wx.Panel):
 	def bind_all(self):
 		self.btn1.Bind(wx.EVT_BUTTON, self.CreateNewObject)
 		self.btn2.Bind(wx.EVT_BUTTON, self.DeleteObject)
+		self.btn3.Bind(wx.EVT_BUTTON, self.SaveObject)
+		self.btn4.Bind(wx.EVT_BUTTON, self.LoadObject)
 		self.objList.Bind(wx.EVT_RIGHT_DOWN, self.OnRightDown)
 
+	def add_saved_object(self, obj):
+		self.temp_data["frame data"][obj] = copy.deepcopy(self.data["Frames"][self.data["Current Frame"]][obj])
+		self.temp_data["Object List"][obj] = copy.deepcopy( self.data["Object List"][obj] )
+		self.temp_data["frame data"][obj]["Keyframes"] = []
+		print(self.data["Image List"])
+		for image in self.data["Object List"][obj]["Images"]:
+			if image != "none":
+				print(image)
+				for img in self.data["Image List"]:
+					if img.endswith(image):
+						self.temp_data["Image List"].append( img )
+
+		print(self.temp_data["Image List"])
+		for x in self.data["Object List"][obj]["Children"]:
+			self.add_saved_object(x)
+		print(self.temp_data["Image List"])
+
+	def LoadObject(self, event):
+		with wx.FileDialog(self, "Load Composite Object", wildcard="COB files (*.cob)|*.cob",
+						style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
+			if fileDialog.ShowModal() == wx.ID_CANCEL:
+				return
+
+			pathname = fileDialog.GetPath()
+			tempData = json.loads(open(pathname, 'r').read())
+			for image in tempData["Image List"]:
+				self.data["Image List"].append(image)
+				self.window.objCtrl.imgList.AddImg(image, False)
+
+			for objname in tempData["Object List"].keys():
+				self.buildObject(objname , tempData["frame data"][objname] , tempData["Object List"][objname])
+
+
+	def SaveObject(self, event):
+		self.add_saved_object(self.data["Current Object"])
+
+		with wx.FileDialog(self, "Save Composite Object", wildcard="COB files (*.cob)|*.cob",
+			style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
+
+			if fileDialog.ShowModal() == wx.ID_CANCEL:
+				return
+
+			pathname = fileDialog.GetPath()
+			self.writeData(pathname, self.temp_data)
+
+		self.temp_data = {"Object List":{}, "Image List":[], "frame data":{}}
+
+	def writeData(self, pathname, data):
+		try:
+			with open(pathname, 'w') as file:
+				file.write(json.dumps(data))
+		except IOError:
+			wx.LogError("Cannot save current data in file %s" % pathname)
+
 	def OnRightDown(self, event):
-		print("clicked")
 		self.PopupMenu(ParentMenu(self, self.data), event.GetPosition())
 
 	def set_layout(self):
@@ -116,17 +184,23 @@ class ObjectList(wx.Panel):
 			box = wx.MessageDialog(None, 'Are you sure you want to delete %s' % self.data["Current Object"],
 				"Delete Object", wx.OK | wx.CANCEL | wx.ICON_WARNING)
 			if box.ShowModal() == wx.ID_OK:
+
 				self.window.Set_Third_Status(self.data["Current Object"] + " deleted")
 
-				self.data["Object List"].pop(self.data["Current Object"])
-				for frame in range(len(self.data["Frames"])):
-					self.data["Frames"][frame].pop(self.data["Current Object"])
+				self.remove_object(self.data["Current Object"])
 
 				self.data["Current Object"] = list(self.data["Object List"].keys())[0]
-
 				self.objList.Set(list(self.data["Object List"].keys()) )
 
 				self.frame.update_object()
+
+	def remove_object(self, cur_obj ):
+		children = copy.deepcopy(self.data["Object List"][cur_obj]["Children"])
+		self.data["Object List"].pop(cur_obj )
+		for frame in range(len(self.data["Frames"])):
+			self.data["Frames"][frame].pop(cur_obj )
+		for child in children:
+			self.remove_object(child)
 
 
 	def CreateNewObject(self, event):
@@ -139,12 +213,17 @@ class ObjectList(wx.Panel):
 				first = True
 
 			#creates empty object and copies default data values
-			self.data["Object List"][box.GetValue()] = {"Images":[ "none" ], "Parent":None, "Children":[]}
+			objValue = {"Images":[ "none" ], "Parent":None, "Children":[]}
+			self.buildObject(box.GetValue(), data_default.default, objValue)
 
-			for frame in range(len(self.data["Frames"])):
-				self.data["Frames"][frame][box.GetValue()] = copy.deepcopy(data_default.default)
+	def buildObject(self, name, obj, objValue):
+		self.data["Object List"][ name] = objValue
+		for frame in range(len(self.data["Frames"])):
+			self.data["Frames"][frame][name] = copy.deepcopy(obj)
 
-			self.data["Current Object"] = box.GetValue()
+		self.data["Current Object"] = name
+		if objValue["Parent"] == None:
+			self.data["Parents"].append(name )
 		self.objList.Set(list(self.data["Object List"].keys()) )
 		self.frame.update_object()
 

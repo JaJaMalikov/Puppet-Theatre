@@ -10,7 +10,7 @@ import sampler
 #constants to be used throughout the program
 from consts import * 
 
-loc = 74
+import pygame
 
 class PygamePanel(wx.Panel):
 	"""
@@ -32,14 +32,8 @@ class PygamePanel(wx.Panel):
 			this sets the driver to the compatible windib on windows
 		only then can pygame be imported and initialized
 		"""
-		global pygame
 		wx.Panel.__init__(self, parent, ID, size=ViewPortSize)
-		self.Fit()
-		os.environ['SDL_WINDOWID'] = str(self.GetHandle())
-		os.environ['SDL_VIDEODRIVER'] = 'windib'
-		import pygame
 		pygame.init()
-
 		### everything above this is completely nessesary as is
 
 		self.listener = listener
@@ -48,6 +42,28 @@ class PygamePanel(wx.Panel):
 		self.set_clear_color((0,0,0))
 		self.set_size(ViewPortSize)
 		self.layout()
+
+		self.Bind(wx.EVT_LEFT_DOWN, self.OnMouseDown)
+		self.Bind(wx.EVT_LEFT_UP, self.OnMouseUp)
+		self.Bind(wx.EVT_MOTION, self.OnMouseMotion)
+		self.Bind(wx.EVT_LEAVE_WINDOW, self.OnMouseUp)
+
+	def OnMouseMotion(self, event):
+		self.listener.set_mouse_pos(event.GetPosition())
+
+	def OnMouseDown(self, event):
+		if event.LeftIsDown():
+			self.listener.set_mouse_down(1)
+		if event.MiddleIsDown():
+			self.listener.set_mouse_down(2)
+		if event.RightIsDown():
+			self.listener.set_mouse_down(3)
+
+	def OnMouseUp(self, event):
+		self.listener.set_mouse_up(1)
+		self.listener.set_mouse_up(2)
+		self.listener.set_mouse_up(3)
+
 
 	def set_clear_color(self, color):
 		self.clear_color = color
@@ -61,28 +77,39 @@ class PygamePanel(wx.Panel):
 
 	def layout(self):
 		#resize the screen to the current ViewPortSize
-		self.screen = pygame.display.set_mode(self.ViewPortSize, pygame.RESIZABLE)
+		self.screen = pygame.Surface(self.ViewPortSize, 0, 32)
 
 	def draw(self, image, pos):
 		self.screen.blit(image, pos)
 
+	def render(self):
+		image_string = pygame.image.tostring(self.screen, "RGB")
+		wx_img = wx.Image(self.length, self.height, image_string)
+		wx_bmp = wx.Bitmap(wx_img)
+		dc = wx.ClientDC(self)
+		dc.DrawBitmap(wx_bmp, 0, 0, False)
+		del dc
+
 	def Update(self):
 		#swaps the buffers and then clears the new buffer before drawing
 		#not strictly nessesary but useful for current purposes
-		pygame.display.flip()
-		self.screen.fill(self.clear_color)
-		for event in pygame.event.get():
-			if event.type == pygame.KEYDOWN:
-				self.listener.set_keydown(event.key)
-			elif event.type == pygame.KEYUP:
-				self.listener.set_keyup(event.key)
-			elif event.type == pygame.MOUSEBUTTONDOWN:
-				self.listener.set_mouse_down(event.button)
-			elif event.type == pygame.MOUSEBUTTONUP:
-				self.listener.set_mouse_up(event.button)
-			else:
-				pass
-		self.listener.set_mouse_pos(pygame.mouse.get_pos())
+		self.render()
+		#self.screen.fill(self.clear_color)
+
+		if self.HasFocus():
+			for event in pygame.event.get():
+				if event.type == pygame.KEYDOWN:
+					self.listener.set_keydown(event.key)
+				elif event.type == pygame.KEYUP:
+					self.listener.set_keyup(event.key)
+				elif event.type == pygame.MOUSEBUTTONDOWN:
+					self.listener.set_mouse_down(event.button)
+				elif event.type == pygame.MOUSEBUTTONUP:
+					self.listener.set_mouse_up(event.button)
+				else:
+					pass
 		
+
+
 	def OnClose(self):
 		pygame.quit()
