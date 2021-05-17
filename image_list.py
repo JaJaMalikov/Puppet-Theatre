@@ -123,8 +123,50 @@ class ImageList(wx.Panel ):
 
 	def Update(self, second):
 		if self.listener.get_struck(13):
-			print("hit enter")
 			self.On_overwrite_next(1)
+
+		#49 = 0
+		if self.listener.get_key(49):
+			self.imgList.SetSelection(1)
+			self.frame.SwitchImage(1)
+
+		if self.listener.get_key(50):
+			self.imgList.SetSelection(2)
+			self.frame.SwitchImage(1)
+
+		if self.listener.get_key(51):
+			self.imgList.SetSelection(3)
+			self.frame.SwitchImage(1)
+
+		if self.listener.get_key(52):
+			self.imgList.SetSelection(4)
+			self.frame.SwitchImage(1)
+
+		if self.listener.get_key(53):
+			self.imgList.SetSelection(5)
+			self.frame.SwitchImage(1)
+
+		if self.listener.get_key(54):
+			self.imgList.SetSelection(6)
+			self.frame.SwitchImage(1)
+
+		if self.listener.get_key(55):
+			self.imgList.SetSelection(7)
+			self.frame.SwitchImage(1)
+
+		if self.listener.get_key(56):
+			self.imgList.SetSelection(8)
+			self.frame.SwitchImage(1)
+
+		if self.listener.get_key(57):
+			self.imgList.SetSelection(9)
+			self.frame.SwitchImage(1)
+
+		if self.listener.get_key(58):
+			self.imgList.SetSelection(10)
+			self.frame.SwitchImage(1)
+
+
 		self.listener.clear_struck()
 
 	def On_overwrite_future(self, event):

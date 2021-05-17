@@ -67,8 +67,8 @@ class CanvasBase(glcanvas.GLCanvas):
 
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
 
 		glGenerateMipmap(GL_TEXTURE_2D)
 		return texture
@@ -104,7 +104,6 @@ class CanvasBase(glcanvas.GLCanvas):
 			glVertex3f(*verts[x])
 
 		glEnd()
-		glDisable(GL_BLEND)
 
 		glColor4f(1.0,1.0,1.0,1.0)
 		glPopMatrix()

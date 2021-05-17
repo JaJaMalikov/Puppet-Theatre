@@ -45,6 +45,12 @@ class RenderCtrl(wx.Panel):
 			"1080p":[1920,1080],
 			"720p":[1280,720],
 			"VGA":[640,480],
+
+			"8Kp":[4320,8192],
+			"4Kp":[2160,4096],
+			"1080pp":[1080,1920],
+			"720pp":[720,1280],
+			"VGAp":[480,640],
 			}
 
 		#builds the panel and sets layout, binds functions to actions
@@ -121,6 +127,7 @@ class RenderCtrl(wx.Panel):
 
 	def OnAngleChange(self, event):
 		self.canvas.set_view_angle(self.angle_selector.GetValue())
+		self.window.PushHistory()
 
 	def OnRes_button(self, event):
 		self.canvas.set_resolution(self.resolutions[self.res_selector.GetStringSelection()])
@@ -286,6 +293,7 @@ class RenderCtrl(wx.Panel):
 		self.origin_scale_y = self.data["Frames"][self.data["Current Frame"]][self.data["Current Object"]]["ScaleY"]
 
 		self.canvas.CaptureMouse()
+
 
 	def OnMouseUp(self, event):
 		self.left_mouse_click = False
@@ -455,26 +463,57 @@ class RenderCtrl(wx.Panel):
 		#once the box size is determined, the offsets are generated using the difference in size of the FBO
 		#and 1080p, giving a subsection of the render viewport to save as a series of images
 		#the FBO is then generated using these coordinates
-		self.height_coords = 4.13
-		self.width_pixels, self.height_pixels = self.canvas.ViewPortSize
-		self.canvas_ratio = self.width_pixels/self.height_pixels
-		self.pix_ratio = self.height_pixels/self.width_pixels
-		self.width_coords = self.canvas_ratio * self.height_coords
-		self.canvas.box_width = self.width_coords * .8
-		self.canvas.box_height = self.canvas.box_width * (self.canvas.resolution[1] / self.canvas.resolution[0])
+
+		if self.canvas.resolution[1] > self.canvas.resolution[0]:
+			print("portrait")
+			self.height_coords = 4.13
+			self.width_pixels, self.height_pixels = self.canvas.ViewPortSize
+			self.canvas_ratio = self.width_pixels/self.height_pixels
+			self.pix_ratio = self.height_pixels/self.width_pixels
+			self.width_coords = self.canvas_ratio * self.height_coords
+			self.canvas.box_height = self.height_coords * .9
+			self.canvas.box_width = self.canvas.box_height * ( self.canvas.resolution[0] / self.canvas.resolution[1])
 
 
-		self.px_ratio = self.height_pixels / self.width_pixels
+			self.px_ratio = self.width_pixels / self.height_pixels
+			print(self.px_ratio)
 
-		self.px_width = int(self.canvas.resolution[0] * 1.25)
-		self.px_height = int(self.px_width * self.px_ratio)
+			self.px_height = int(self.canvas.resolution[1] * 1.111)
+			self.px_width = int(self.px_height * self.px_ratio)
+			#self.px_width = int(self.canvas.resolution[0] * 1.25)
+			#self.px_height = int(self.px_width * self.px_ratio)
 
-		print(self.px_width, self.px_height)
+			print(self.px_width, self.px_height)
 
-		self.xoffset = int((self.px_width * .2) / 2)
-		self.yoffset = int((self.px_height * (1-(self.canvas.resolution[1]/self.px_height) )/2 ))
+			self.yoffset = int((self.px_height * .1) / 2)
+			self.xoffset = int((self.px_width * (1-(self.canvas.resolution[0]/self.px_width) )/2 ))
 
-		self.canvas.gen_fbo(self.px_width, self.px_height)
+			#self.xoffset = int((self.px_width * .2) / 2)
+			#self.yoffset = int((self.px_height * (1-(self.canvas.resolution[1]/self.px_height) )/2 ))
+
+			self.canvas.gen_fbo(self.px_width, self.px_height)
+		else:
+			print("landscape")
+			self.height_coords = 4.13
+			self.width_pixels, self.height_pixels = self.canvas.ViewPortSize
+			self.canvas_ratio = self.width_pixels/self.height_pixels
+			self.pix_ratio = self.height_pixels/self.width_pixels
+			self.width_coords = self.canvas_ratio * self.height_coords
+			self.canvas.box_width = self.width_coords * .8
+			self.canvas.box_height = self.canvas.box_width * (self.canvas.resolution[1] / self.canvas.resolution[0])
+
+
+			self.px_ratio = self.height_pixels / self.width_pixels
+
+			self.px_width = int(self.canvas.resolution[0] * 1.25)
+			self.px_height = int(self.px_width * self.px_ratio)
+
+			print(self.px_width, self.px_height)
+
+			self.xoffset = int((self.px_width * .2) / 2)
+			self.yoffset = int((self.px_height * (1-(self.canvas.resolution[1]/self.px_height) )/2 ))
+
+			self.canvas.gen_fbo(self.px_width, self.px_height)
 
 	def gen_draw_order(self, obj_list, parent_list = [] ):
 		parents = set(obj_list)
@@ -503,6 +542,7 @@ class RenderCtrl(wx.Panel):
 		imglist = self.gen_draw_order(parents)
 
 		draw_order = sorted(imglist , key = lambda x: imglist[x][1])
+
 
 		for obj in draw_order:
 			if obj != "Camera":

@@ -95,16 +95,29 @@ Beta:
 [X] 1.7.2 - 							Add point of origin state control
 [X] 1.7.3 - 							Repair stacked drawing and transparency issues
 [X] 1.8.0 - 							fix history memory issues
+[X] 1.8.1 - 							reverted edit history
+[ ] 1.8.5 - 							
 
 [ ] 2.0.0 - "FuuuuuTuuuuure"			Migrate to modern opengl
-[ ] 2.0.1 - 							Code refactored, commented, and made maintainable
-[ ]	2.1.0 - 							23, Adding complex composite objects, full lineage using transformation hierarchy
+[X] 2.0.1 - 							Code refactored, commented, and made maintainable
+[X]	2.1.0 - 							23, Adding complex composite objects, full lineage using transformation hierarchy
 
 [ ] 3.0.0 - "I C what you did there"	Migrate to C++
 [ ] 3.0.1 - 							Code refactored, commented, and made maintainable
 """
 
-version_name = "Monchy Puppet Theatre Beta 1.8.0"
+"""
+
+outline images when empty/blank
+create 'blank' 
+sequence generator/macro creator
+non-linear interpolations for inbetweens w/selector
+drawing shapes on images
+
+
+"""
+
+version_name = "Monchy Puppet Theatre Beta 1.8.5"
 
 class MainFrame(wx.Frame):
 	def __init__(self, parent, title, size):
@@ -366,19 +379,46 @@ class MainFrame(wx.Frame):
 		self.historyIndex = 0
 		self.savedIndex = 0
 		self.editHistory.append(copy.deepcopy(self.data))
+
+		"""
+		hist_back = [self.data["Current Object"], []]
+		print(hist_back)
+		for frame in self.data["Frames"]:
+			hist_back[1].append(copy.deepcopy(frame[self.data["Current Object"]]))
+
+		print(hist_back)
+		self.editHistory.append(hist_back )
 		print(len(self.editHistory))
-		print(self.historyIndex)
+		print(self.historyIndex)"""
 
 	def PushHistory(self):
+		pass
+		#if self.historyIndex < (len(self.editHistory) - 1):
+		#	print("truncated history")
+		#	self.editHistory = self.editHistory[:self.historyIndex+1]
+		#self.editHistory.append(copy.deepcopy(self.data))
+		#self.historyIndex += 1
+		#if len(self.editHistory) > 50:
+		#	self.editHistory.pop(0)
+		#	self.historyIndex = (len(self.editHistory) - 1)
+		#print(len(self.editHistory))
+		#print(self.historyIndex)
+
+		"""		
+		print("hello?")
 		if self.historyIndex < (len(self.editHistory) - 1):
 			print("truncated history")
 			self.editHistory = self.editHistory[:self.historyIndex+1]
 
 		hist_back = [self.data["Current Object"], []]
+		print(hist_back)
 		for frame in self.data["Frames"]:
 			hist_back[1].append(copy.deepcopy(frame[self.data["Current Object"]]))
 
+		print(hist_back)
 		self.editHistory.append(hist_back )
+
+		print(hist_back)
 
 		self.historyIndex += 1
 		if len(self.editHistory) > 150:
@@ -386,8 +426,24 @@ class MainFrame(wx.Frame):
 			self.historyIndex = (len(self.editHistory) - 1)
 		print(len(self.editHistory))
 		print(self.historyIndex)
+		print(self.editHistory)"""
 
 	def UndoHistory(self, event):
+		print("undoing")
+		self.historyIndex -= 1
+		if self.historyIndex < 0:
+			self.historyIndex = 0
+		else:
+			self.data = copy.deepcopy(self.editHistory[self.historyIndex])
+			print(len(self.editHistory))
+			print(self.historyIndex)
+			#for key in self.editHistory[self.historyIndex].keys():
+			self.set_data()
+			#	#self.data[key] = copy.deepcopy(self.editHistory[self.historyIndex][key])
+			print("data loaded")
+			self.objCtrl.reload(False)
+			self.objCtrl.LoadStatus()
+		"""
 		print("undoing")
 		self.historyIndex -= 1
 		if self.historyIndex < 0:
@@ -396,6 +452,7 @@ class MainFrame(wx.Frame):
 			#self.data = copy.deepcopy(self.editHistory[self.historyIndex])
 
 			for frame in range(len(self.data["Frames"])):
+				print(frame)
 				self.data["Frames"][frame][ self.editHistory[self.historyIndex][0] ] = copy.deepcopy(self.editHistory[self.historyIndex][1][frame])
 
 			print(len(self.editHistory))
@@ -405,9 +462,21 @@ class MainFrame(wx.Frame):
 			#	#self.data[key] = copy.deepcopy(self.editHistory[self.historyIndex][key])
 			print("data loaded")
 			self.objCtrl.reload(False)
-			self.objCtrl.LoadStatus()
+			self.objCtrl.LoadStatus()"""
 
 	def RedoHistory(self, event):
+		print("redoing")
+		self.historyIndex += 1
+		if self.historyIndex >= len(self.editHistory):
+			self.historyIndex -= 1
+		else:
+			self.data = copy.deepcopy(self.editHistory[self.historyIndex])
+		print(len(self.editHistory))
+		print(self.historyIndex)
+		self.set_data()
+		self.objCtrl.reload(False)
+		self.objCtrl.LoadStatus()
+		"""
 		print("redoing")
 		self.historyIndex += 1
 		if historyIndex >= len(self.editHistory):
@@ -423,7 +492,7 @@ class MainFrame(wx.Frame):
 		print(self.historyIndex)
 		self.set_data()
 		self.objCtrl.reload(False)
-		self.objCtrl.LoadStatus()
+		self.objCtrl.LoadStatus()"""
 
 	def new_project(self, startup):
 		#sets the animation state data into default, for more details see data_default.py

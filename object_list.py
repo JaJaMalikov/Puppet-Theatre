@@ -45,7 +45,6 @@ class ParentMenu(wx.Menu):
 				self.data["Object List"][objname]["Children"].append(self.data["Current Object"])
 				self.data["Parents"].remove( self.data["Current Object"])
 
-		print(self.data["Parents"])
 		self.dlg.Destroy()
 
 class ObjectList(wx.Panel):
@@ -87,40 +86,21 @@ class ObjectList(wx.Panel):
 		self.btn2.Bind(wx.EVT_BUTTON, self.DeleteObject)
 		self.btn3.Bind(wx.EVT_BUTTON, self.SaveObject)
 		self.btn4.Bind(wx.EVT_BUTTON, self.LoadObject)
+		self.btn5.Bind(wx.EVT_BUTTON, self.copyObject)
 		self.objList.Bind(wx.EVT_RIGHT_DOWN, self.OnRightDown)
 
 	def add_saved_object(self, obj):
 		self.temp_data["frame data"][obj] = copy.deepcopy(self.data["Frames"][self.data["Current Frame"]][obj])
 		self.temp_data["Object List"][obj] = copy.deepcopy( self.data["Object List"][obj] )
 		self.temp_data["frame data"][obj]["Keyframes"] = []
-		print(self.data["Image List"])
 		for image in self.data["Object List"][obj]["Images"]:
 			if image != "none":
-				print(image)
 				for img in self.data["Image List"]:
 					if img.endswith(image):
 						self.temp_data["Image List"].append( img )
 
-		print(self.temp_data["Image List"])
 		for x in self.data["Object List"][obj]["Children"]:
 			self.add_saved_object(x)
-		print(self.temp_data["Image List"])
-
-	def LoadObject(self, event):
-		with wx.FileDialog(self, "Load Composite Object", wildcard="COB files (*.cob)|*.cob",
-						style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
-			if fileDialog.ShowModal() == wx.ID_CANCEL:
-				return
-
-			pathname = fileDialog.GetPath()
-			tempData = json.loads(open(pathname, 'r').read())
-			for image in tempData["Image List"]:
-				self.data["Image List"].append(image)
-				self.window.objCtrl.imgList.AddImg(image, False)
-
-			for objname in tempData["Object List"].keys():
-				self.buildObject(objname , tempData["frame data"][objname] , tempData["Object List"][objname])
-
 
 	def SaveObject(self, event):
 		self.add_saved_object(self.data["Current Object"])
@@ -152,13 +132,19 @@ class ObjectList(wx.Panel):
 
 		self.t_b_sizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.b_b_sizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.l_b_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
 		self.t_b_sizer.Add(self.btn1)
 		self.t_b_sizer.Add(self.btn2)
+
 		self.b_b_sizer.Add(self.btn3)
 		self.b_b_sizer.Add(self.btn4)
+
+		self.l_b_sizer.Add(self.btn5)
+
 		self.buttonSizer.Add(self.t_b_sizer)
 		self.buttonSizer.Add(self.b_b_sizer)
+		self.buttonSizer.Add(self.l_b_sizer)
 		self.pageSizer.Add(self.buttonSizer, 0)
 
 		self.pageSizer.Add(self.objList, -1, wx.EXPAND)
@@ -170,6 +156,8 @@ class ObjectList(wx.Panel):
 		self.btn2 = wx.Button(self, 1, "Delete")
 		self.btn3 = wx.Button(self, 1, "Save")
 		self.btn4 = wx.Button(self, 1, "Load")
+		self.btn5 = wx.Button(self, 1, "Copy")
+
 		self.objList = wx.ListBox(self, wx.ID_ANY)
 
 	def set_data(self, data):
@@ -179,6 +167,8 @@ class ObjectList(wx.Panel):
 		self.objList.Set(list(self.data["Object List"].keys()) )
 
 	def DeleteObject(self, event):
+		self.window.PushHistory()
+
 		#should be bound to a menu item one day with an "are you sure" box attached
 		if self.data["Current Object"] != "Camera":
 			box = wx.MessageDialog(None, 'Are you sure you want to delete %s' % self.data["Current Object"],
@@ -215,8 +205,49 @@ class ObjectList(wx.Panel):
 			#creates empty object and copies default data values
 			objValue = {"Images":[ "none" ], "Parent":None, "Children":[]}
 			self.buildObject(box.GetValue(), data_default.default, objValue)
+			self.window.PushHistory()
+
+	def LoadObject(self, event):
+		with wx.FileDialog(self, "Load Composite Object", wildcard="COB files (*.cob)|*.cob",
+						style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
+			if fileDialog.ShowModal() == wx.ID_CANCEL:
+				return
+
+			self.window.PushHistory()
+
+			pathname = fileDialog.GetPath()
+			tempData = json.loads(open(pathname, 'r').read())
+			for image in tempData["Image List"]:
+				self.data["Image List"].append(image)
+				self.window.objCtrl.imgList.AddImg(image, False)
+
+			for objname in tempData["Object List"].keys():
+				self.buildObject(objname , tempData["frame data"][objname] , tempData["Object List"][objname])
+
+
+	def copyObject(self, event):
+		objValue = copy.deepcopy(self.data["Object List"][self.data["Current Object"]])
+		name = self.data["Current Object"]
+
+		new_name = name
+		counter = 1
+
+		while new_name in self.data["Object List"].keys():
+			new_name = name + str(counter)
+			counter += 1
+
+
+		self.data["Parents"].append(new_name)
+		self.data["Object List"][new_name] = objValue
+
+		for frame in range(len(self.data["Frames"])):
+			self.data["Frames"][frame][new_name] = copy.deepcopy(self.data["Frames"][frame][name])
+		self.objList.Set(list(self.data["Object List"].keys() ))
+
+
 
 	def buildObject(self, name, obj, objValue):
+
 		self.data["Object List"][ name] = objValue
 		for frame in range(len(self.data["Frames"])):
 			self.data["Frames"][frame][name] = copy.deepcopy(obj)
