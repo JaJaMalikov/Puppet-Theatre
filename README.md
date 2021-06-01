@@ -7,7 +7,7 @@
 ***
 ***
 *** To avoid retyping too much info. Do a search and replace for the following:
-*** LaughterJerry, Puppet-Theatre, twitter_handle, laughteralan@gmail.com, Puppet Theatre, project_description
+*** LaughterJerry, Puppet-Theatre, twitter_handle, laughteralan@gmail.com, Puppet Theatre, Puppet Theatre is a simple replacement for Flash after it was shut down by Adobe. Allowing the user to create animations in sync to sound at multiple framerates with frame-perfect accuracy. Manipulating the images also works during playback allowing the user to record live motions or set keyframes with linear interpolation
 -->
 
 
@@ -36,7 +36,7 @@
   <h3 align="center">Puppet Theatre</h3>
 
   <p align="center">
-    project_description
+    Puppet Theatre is a simple replacement for Flash after it was shut down by Adobe. Allowing the user to create animations in sync to sound at multiple framerates with frame-perfect accuracy. Manipulating the images also works during playback allowing the user to record live motions or set keyframes with linear interpolation
     <br />
     <a href="https://github.com/LaughterJerry/Puppet-Theatre"><strong>Explore the docs »</strong></a>
     <br />
@@ -86,7 +86,7 @@
 
 Here's a blank template to get started:
 **To avoid retyping too much info. Do a search and replace with your text editor for the following:**
-`LaughterJerry`, `Puppet-Theatre`, `twitter_handle`, `laughteralan@gmail.com`, `Puppet Theatre`, `project_description`
+`LaughterJerry`, `Puppet-Theatre`, `twitter_handle`, `laughteralan@gmail.com`, `Puppet Theatre`, `Puppet Theatre is a simple replacement for Flash after it was shut down by Adobe. Allowing the user to create animations in sync to sound at multiple framerates with frame-perfect accuracy. Manipulating the images also works during playback allowing the user to record live motions or set keyframes with linear interpolation`
 
 
 ### Built With
