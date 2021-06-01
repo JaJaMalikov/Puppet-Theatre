@@ -20,7 +20,7 @@
 *** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
 *** https://www.markdownguide.org/basic-syntax/#reference-style-links
 -->
-[![Issues][issues-shield]][issues-url]
+<!--[![Issues][issues-shield]][issues-url]-->
 [![MIT License][license-shield]][license-url]
 [![LinkedIn][linkedin-shield]][linkedin-url]
 
@@ -30,7 +30,7 @@
 <br />
 <p align="center">
   <a href="https://github.com/LaughterJerry/Puppet-Theatre">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+    <img src="images/logo.png" alt="Logo" width="10%">
   </a>
 
   <h3 align="center">Puppet Theatre</h3>
