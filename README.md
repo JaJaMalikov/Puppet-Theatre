@@ -189,7 +189,7 @@ Project Link: [https://github.com/LaughterJerry/Puppet-Theatre](https://github.c
 [stars-url]: https://github.com/LaughterJerry/repo/stargazers
 [issues-shield]: https://img.shields.io/github/issues/LaughterJerry/repo.svg?style=for-the-badge
 [issues-url]: https://github.com/LaughterJerry/repo/issues
-[license-shield]: https://img.shields.io/github/license/LaughterJerry/repo.svg?style=for-the-badge
-[license-url]: https://github.com/LaughterJerry/repo/blob/master/LICENSE.txt
+[license-shield]: https://img.shields.io/badge/License-GPLv3-blue.svg
+[license-url]: https://www.gnu.org/licenses/gpl-3.0
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
-[linkedin-url]: https://linkedin.com/in/LaughterJerry
+[linkedin-url]: https://www.linkedin.com/in/richard-laughter-a5687a213/
