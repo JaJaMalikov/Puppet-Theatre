@@ -88,7 +88,7 @@ Puppet Theatre is a simple replacement for Flash after it was shut down by Adobe
 
 ### Built With
 
-* https://img.shields.io/badge/Language-Python-green
+* [![Language][language-source]]
 * []()
 * []()
 
@@ -178,6 +178,7 @@ Project Link: [https://github.com/LaughterJerry/Puppet-Theatre](https://github.c
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
+[language-source]: https://img.shields.io/badge/Language-Python-green
 [contributors-shield]: https://img.shields.io/github/contributors/LaughterJerry/repo.svg?style=for-the-badge
 [contributors-url]: https://github.com/LaughterJerry/repo/graphs/contributors
 [forks-shield]: https://img.shields.io/github/forks/LaughterJerry/repo.svg?style=for-the-badge
