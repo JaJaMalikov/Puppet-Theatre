@@ -30,7 +30,7 @@
 <br />
 <p align="center">
   <a href="https://github.com/LaughterJerry/Puppet-Theatre">
-    <img src="images/logo.png" alt="Logo" width="20%">
+    <img src="images/logo.png" alt="Logo" width="100%">
   </a>
 
   <h3 align="center">Puppet Theatre</h3>
