@@ -7,7 +7,7 @@
 ***
 ***
 *** To avoid retyping too much info. Do a search and replace for the following:
-*** laughterjerry, Puppet-Theatre, twitter_handle, laughteralan@gmail.com, Puppet Theatre, project_description
+*** LaughterJerry, Puppet-Theatre, twitter_handle, laughteralan@gmail.com, Puppet Theatre, project_description
 -->
 
 
@@ -32,7 +32,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <p align="center">
-  <a href="https://github.com/laughterjerry/Puppet-Theatre">
+  <a href="https://github.com/LaughterJerry/Puppet-Theatre">
     <img src="images/logo.png" alt="Logo" width="80" height="80">
   </a>
 
@@ -41,14 +41,14 @@
   <p align="center">
     project_description
     <br />
-    <a href="https://github.com/laughterjerry/Puppet-Theatre"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/LaughterJerry/Puppet-Theatre"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/laughterjerry/Puppet-Theatre">View Demo</a>
+    <a href="https://github.com/LaughterJerry/Puppet-Theatre">View Demo</a>
     ·
-    <a href="https://github.com/laughterjerry/Puppet-Theatre/issues">Report Bug</a>
+    <a href="https://github.com/LaughterJerry/Puppet-Theatre/issues">Report Bug</a>
     ·
-    <a href="https://github.com/laughterjerry/Puppet-Theatre/issues">Request Feature</a>
+    <a href="https://github.com/LaughterJerry/Puppet-Theatre/issues">Request Feature</a>
   </p>
 </p>
 
@@ -89,7 +89,7 @@
 
 Here's a blank template to get started:
 **To avoid retyping too much info. Do a search and replace with your text editor for the following:**
-`laughterjerry`, `Puppet-Theatre`, `twitter_handle`, `laughteralan@gmail.com`, `Puppet Theatre`, `project_description`
+`LaughterJerry`, `Puppet-Theatre`, `twitter_handle`, `laughteralan@gmail.com`, `Puppet Theatre`, `project_description`
 
 
 ### Built With
@@ -117,7 +117,7 @@ This is an example of how to list things you need to use the software and how to
 
 1. Clone the repo
    ```sh
-   git clone https://github.com/laughterjerry/Puppet-Theatre.git
+   git clone https://github.com/LaughterJerry/Puppet-Theatre.git
    ```
 2. Install NPM packages
    ```sh
@@ -138,7 +138,7 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 <!-- ROADMAP -->
 ## Roadmap
 
-See the [open issues](https://github.com/laughterjerry/Puppet-Theatre/issues) for a list of proposed features (and known issues).
+See the [open issues](https://github.com/LaughterJerry/Puppet-Theatre/issues) for a list of proposed features (and known issues).
 
 
 
@@ -167,7 +167,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 Your Name - [@twitter_handle](https://twitter.com/twitter_handle) - laughteralan@gmail.com
 
-Project Link: [https://github.com/laughterjerry/Puppet-Theatre](https://github.com/laughterjerry/Puppet-Theatre)
+Project Link: [https://github.com/LaughterJerry/Puppet-Theatre](https://github.com/LaughterJerry/Puppet-Theatre)
 
 
 
@@ -184,15 +184,15 @@ Project Link: [https://github.com/laughterjerry/Puppet-Theatre](https://github.c
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/laughterjerry/repo.svg?style=for-the-badge
-[contributors-url]: https://github.com/laughterjerry/repo/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/laughterjerry/repo.svg?style=for-the-badge
-[forks-url]: https://github.com/laughterjerry/repo/network/members
-[stars-shield]: https://img.shields.io/github/stars/laughterjerry/repo.svg?style=for-the-badge
-[stars-url]: https://github.com/laughterjerry/repo/stargazers
-[issues-shield]: https://img.shields.io/github/issues/laughterjerry/repo.svg?style=for-the-badge
-[issues-url]: https://github.com/laughterjerry/repo/issues
-[license-shield]: https://img.shields.io/github/license/laughterjerry/repo.svg?style=for-the-badge
-[license-url]: https://github.com/laughterjerry/repo/blob/master/LICENSE.txt
+[contributors-shield]: https://img.shields.io/github/contributors/LaughterJerry/repo.svg?style=for-the-badge
+[contributors-url]: https://github.com/LaughterJerry/repo/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/LaughterJerry/repo.svg?style=for-the-badge
+[forks-url]: https://github.com/LaughterJerry/repo/network/members
+[stars-shield]: https://img.shields.io/github/stars/LaughterJerry/repo.svg?style=for-the-badge
+[stars-url]: https://github.com/LaughterJerry/repo/stargazers
+[issues-shield]: https://img.shields.io/github/issues/LaughterJerry/repo.svg?style=for-the-badge
+[issues-url]: https://github.com/LaughterJerry/repo/issues
+[license-shield]: https://img.shields.io/github/license/LaughterJerry/repo.svg?style=for-the-badge
+[license-url]: https://github.com/LaughterJerry/repo/blob/master/LICENSE.txt
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
-[linkedin-url]: https://linkedin.com/in/laughterjerry
+[linkedin-url]: https://linkedin.com/in/LaughterJerry
