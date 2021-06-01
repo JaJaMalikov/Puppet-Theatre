@@ -22,7 +22,7 @@
 -->
 [![Issues][issues-shield]][issues-url]
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![LinkedIn][linkedin-shield]][linkedin-url]
+[![LinkedIn][https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white]][https://www.linkedin.com/in/richard-laughter-a5687a213/]
 
 <a href="https://www.linkedin.com/in/richard-laughter-a5687a213/">https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white</a>
 
