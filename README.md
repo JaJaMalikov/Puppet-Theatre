@@ -88,7 +88,7 @@ Puppet Theatre is a simple replacement for Flash after it was shut down by Adobe
 
 ### Built With
 
-* [![Language][language-source]]
+* ![Language][language-source]
 * []()
 * []()
 
