@@ -21,7 +21,7 @@
 *** https://www.markdownguide.org/basic-syntax/#reference-style-links
 -->
 [![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][https://www.gnu.org/licenses/gpl-3.0.txt]
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![LinkedIn][linkedin-shield]][linkedin-url]
 
 
