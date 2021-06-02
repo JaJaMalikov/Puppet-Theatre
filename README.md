@@ -220,6 +220,7 @@ Beta
 [X] 1.8.0 -               fix history memory issues
 
 [X] 1.8.1 -               reverted edit history
+
 [ ] 1.8.5 -               
 
 [ ] 2.0.0 - "FuuuuuTuuuuure"      Migrate to modern opengl
@@ -256,7 +257,7 @@ Distributed under the GPL v3. See `LICENSE` for more information.
 <!-- CONTACT -->
 ## Contact
 
-Your Name - laughteralan@gmail.com
+Jerry Laughter - laughteralan@gmail.com
 
 Project Link: [https://github.com/LaughterJerry/Puppet-Theatre](https://github.com/LaughterJerry/Puppet-Theatre)
 
