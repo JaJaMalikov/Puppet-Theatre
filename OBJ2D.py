@@ -25,8 +25,9 @@ class OBJ2D:
 
 		self.texture = self.load_texture()
 
-		img_num = pathname.count("\\")
-		self.img_tag = pathname.split("\\", img_num-1)[-1]
+		# use basename for cross-platform path handling
+		import os
+		self.img_tag = os.path.basename(pathname)
 
 	def load_texture(self):
 		"""

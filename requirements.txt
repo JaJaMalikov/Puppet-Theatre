@@ -1,0 +1,6 @@
+wxPython
+pygame
+PyOpenGL
+ffmpeg-python
+numpy
+scipy

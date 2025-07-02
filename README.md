@@ -98,11 +98,19 @@ Puppet Theatre is a simple replacement for Flash after it was shut down by Adobe
 
 ### Installation
 
-1. Download the installer
+1. Clone the repository
    ```sh
-   https://github.com/LaughterJerry/Puppet-Theatre/blob/main/build/main/main.exe
+   git clone https://github.com/LaughterJerry/Puppet-Theatre.git
    ```
-2. run the installer
+2. Install Python 3 and required dependencies
+   ```sh
+   pip install -r requirements.txt
+   ```
+3. Ensure `ffmpeg` is installed and available in your `PATH`.
+4. Run the application
+   ```sh
+   python main.py
+   ```
 
 
 
