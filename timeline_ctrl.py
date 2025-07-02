@@ -6,6 +6,7 @@ import pygame
 
 #other built in libraries
 import copy
+import os
 from datetime import datetime
 
 #pygame rendering panel, designed to layout
@@ -214,8 +215,9 @@ class TimelineCtrl(wx.Panel):
 			self.data["Audio"] = pathname
 			self.wavedata.gen_wavedata(self.data["Audio"])
 			self.gen_waveform()
-			self.loaded = True
-			self.window.Set_Forth_Status(pathname.split("\\")[-1])
+                        self.loaded = True
+                        import os
+                        self.window.Set_Forth_Status(os.path.basename(pathname))
 		#except:
 		#	pass
 

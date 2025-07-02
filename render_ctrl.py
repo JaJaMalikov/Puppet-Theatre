@@ -200,9 +200,10 @@ class RenderCtrl(wx.Panel):
 			if fileDialog.ShowModal() == wx.ID_CANCEL:
 				return
 
-			pathname = fileDialog.GetPath()
-			self.data["Video Name"] = pathname
-			self.data["Render Dir"] = pathname.rsplit("\\",1)[0]
+                        pathname = fileDialog.GetPath()
+                        self.data["Video Name"] = pathname
+                        import os
+                        self.data["Render Dir"] = os.path.dirname(pathname)
 
 	def create_menus(self):
 		#builds the render menu

@@ -128,8 +128,18 @@ class RenderVideoDialog(wx.Dialog):
 
 			print("getting image")
 			imgdata = self.canvas.GetImgData([self.xoffset, self.yoffset])
-			fin_surf = pygame.image.fromstring(imgdata, (self.canvas.resolution[0], self.canvas.resolution[1]), "RGBA", True)
-			pygame.image.save(fin_surf, self.data["Render Dir"] + "\\Frames\\{0:06}.png".format(self.data["Current Frame"]))
+                        fin_surf = pygame.image.fromstring(
+                            imgdata,
+                            (self.canvas.resolution[0], self.canvas.resolution[1]),
+                            "RGBA",
+                            True,
+                        )
+                        frame_path = os.path.join(
+                            self.data["Render Dir"],
+                            "Frames",
+                            "{0:06}.png".format(self.data["Current Frame"]),
+                        )
+                        pygame.image.save(fin_surf, frame_path)
 			print("turning off frame buffer")
 			
 			self.data["Current Frame"] += 1
@@ -154,10 +164,11 @@ class RenderVideoDialog(wx.Dialog):
 		self.window.rendering = True
 		self.data["Current Frame"] = 0
 		print("setting directory")
-		if os.path.isdir( self.data["Render Dir"] + "\\Frames"):
-			shutil.rmtree( self.data["Render Dir"] + "\\Frames")
-		print("making directory")
-		os.mkdir( self.data["Render Dir"] + "\\Frames")
+                frames_dir = os.path.join(self.data["Render Dir"], "Frames")
+                if os.path.isdir(frames_dir):
+                        shutil.rmtree(frames_dir)
+                print("making directory")
+                os.mkdir(frames_dir)
 		print("setting label")
 		self.frames_render_status.SetLabel("Rendering...")
 		self.canvas.FrameBufferOn()
@@ -177,8 +188,11 @@ class RenderVideoDialog(wx.Dialog):
 			os.remove(self.data["Video Name"])
 		if self.video_add_audio_box.GetValue():
 			(
-				ffmpeg
-				.input(self.data["Render Dir"] + "/Frames/%06d.png", framerate=self.data["FPS"])
+                                ffmpeg
+                                .input(
+                                    os.path.join(self.data["Render Dir"], "Frames", "%06d.png"),
+                                    framerate=self.data["FPS"],
+                                )
 				.output(self.data["Video Name"])
 				.global_args("-i", self.data["Audio"], 
 					"-f", "image2",
@@ -192,8 +206,11 @@ class RenderVideoDialog(wx.Dialog):
 
 		else:
 			(
-				ffmpeg
-				.input(self.data["Render Dir"] + "/Frames/%06d.png", framerate=self.data["FPS"])
+                                ffmpeg
+                                .input(
+                                    os.path.join(self.data["Render Dir"], "Frames", "%06d.png"),
+                                    framerate=self.data["FPS"],
+                                )
 				.output(self.data["Video Name"])
 				.global_args(
 					"-f", "image2",

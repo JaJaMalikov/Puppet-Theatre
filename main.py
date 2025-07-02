@@ -283,7 +283,9 @@ class MainFrame(wx.Frame):
 			self.objCtrl.reload(True)
 			self.objCtrl.LoadStatus()
 			self.pathname = pathname
-			self.SetTitle(("%s (%s)" % (version_name,  self.pathname.split("\\")[-1].split(".")[0])) )
+                        import os
+                        file_base = os.path.splitext(os.path.basename(self.pathname))[0]
+                        self.SetTitle(("%s (%s)" % (version_name, file_base)))
 			self.ResetHistory()
 
 	def OnNew(self, event):
@@ -465,7 +467,9 @@ class MainFrame(wx.Frame):
 		except IOError:
 			wx.LogError("Cannot save current data in file %s" % pathname)
 		self.pathname = pathname
-		self.SetTitle(("%s (%s)" % (version_name,  self.pathname.split("\\")[-1].split(".")[0])))
+                import os
+                file_base = os.path.splitext(os.path.basename(self.pathname))[0]
+                self.SetTitle(("%s (%s)" % (version_name, file_base)))
 		self.savedIndex = self.historyIndex
 
 	def OnClose(self, event):
