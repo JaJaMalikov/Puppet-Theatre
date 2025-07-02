@@ -4,7 +4,7 @@ import pygame
 
 #other built-in libraries
 import os
-import ffmpeg
+import subprocess
 import shutil
 
 import copy
@@ -108,7 +108,7 @@ class RenderVideoDialog(wx.Dialog):
 			imglist = self.gen_draw_order(parents)
 			draw_order = sorted(imglist, key=lambda x: imglist[x][1])
 
-			print("resetting canvas")			
+			print("resetting canvas")                       
 			self.canvas.clear()
 			self.canvas.Purge([self.px_width, self.px_height] )
 			self.canvas.transform(self.data["Frames"][self.data["Current Frame"]]["Camera"], False)
@@ -167,43 +167,38 @@ class RenderVideoDialog(wx.Dialog):
 
 	def RenderVideo(self):
 		"""
-		uses ffmpeg library to render video from frames
-		currently output mp4 is not compatible with twitter and must be formatted
-		currently no feedback is given to the program causing it to lock up during render
-		both problems to be fixed in later releases
+		Render frames into a video using ``ffmpeg`` via :mod:`subprocess`.
+		Currently output mp4 is not compatible with twitter and must be formatted.
+		``ffmpeg`` execution blocks the UI; future versions should provide feedback.
 		"""
 		self.video_render_status.SetLabel("Rendering...")
+
 		if os.path.exists(self.data["Video Name"]):
 			os.remove(self.data["Video Name"])
-		if self.video_add_audio_box.GetValue():
-			(
-				ffmpeg
-				.input(self.data["Render Dir"] + "/Frames/%06d.png", framerate=self.data["FPS"])
-				.output(self.data["Video Name"])
-				.global_args("-i", self.data["Audio"], 
-					"-f", "image2",
-					"-s", "%dx%d" % (self.canvas.resolution[0], self.canvas.resolution[1]),
-					"-vcodec", "libx264",
-					"-crf", "25",
-					"-pix_fmt", "yuv420p",
-					)
-				.run()
-			)
 
-		else:
-			(
-				ffmpeg
-				.input(self.data["Render Dir"] + "/Frames/%06d.png", framerate=self.data["FPS"])
-				.output(self.data["Video Name"])
-				.global_args(
-					"-f", "image2",
-					"-s", "%dx%d" % (self.canvas.resolution[0], self.canvas.resolution[1]),
-					"-vcodec", "libx264",
-					"-crf", "25",
-					"-pix_fmt", "yuv420p")
-				.run()
-			)
-		self.video_render_status.SetLabel("Video rendered! <3")
+		cmd = [
+			"ffmpeg",
+			"-framerate", str(self.data["FPS"]),
+			"-i", os.path.join(self.data["Render Dir"], "Frames", "%06d.png"),
+		]
+
+		if self.video_add_audio_box.GetValue():
+			cmd.extend(["-i", self.data["Audio"]])
+
+		cmd.extend([
+			"-f", "image2",
+			"-s", "%dx%d" % (self.canvas.resolution[0], self.canvas.resolution[1]),
+			"-vcodec", "libx264",
+			"-crf", "25",
+			"-pix_fmt", "yuv420p",
+			self.data["Video Name"],
+		])
+
+		try:
+			subprocess.run(cmd, check=True)
+			self.video_render_status.SetLabel("Video rendered! <3")
+		except subprocess.CalledProcessError:
+			self.video_render_status.SetLabel("ffmpeg failed")
 
 	def OnClose(self, event):
 		self.Resize()
