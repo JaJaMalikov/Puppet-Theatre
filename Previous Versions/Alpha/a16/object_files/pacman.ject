@@ -1,6 +1,0 @@
-parent:pacman
-profile:icon.png
-mouth:open,closed
-dirs:fore
-states:default
-substates:default
