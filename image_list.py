@@ -293,9 +293,9 @@ class ImageList(wx.Panel ):
 		creates a new image and adds it to the Image_list dict
 		Image_list uses a string:OBJ2D setup to draw the images
 		"""
-		#removes all but the file name and parent directory to identify it as img_tag
-		img_num = pathname.count("\\")
-		img_tag = pathname.split("\\", img_num-1)[-1]
+		# get image tag using cross-platform path
+		import os
+		img_tag = os.path.basename(pathname)
 
 		#creates a new OBJ2D from the path and adds it to the Image_List using the img_tag
 		#only creates the OBJ2D if one doesn't exist

@@ -1,0 +1,8 @@
+# Ignore build artifacts and Windows binaries
+build/
+dist/
+ffmpeg.exe
+*.dll
+*.pyd
+*.spec
+__pycache__/
